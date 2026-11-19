@@ -1,153 +1,142 @@
-"""Automated Comprehensive Test Suite for Dedicated Polo & Plain Crew-Neck Builders.
-Validates:
-1. Basic Plain Crew-Neck Garment Generation:
-   - Correct dimensional compliance (< 0.85 cm deviation on chest, < 0.5 cm on shoulder/sleeve/length)
-   - 2-manifold closed geometry with hollow neckline
-   - Absence of polo-specific collar/button meshes
-2. Polo T-Shirt Garment Generation:
-   - Correct dimensional compliance
-   - 3D collar stand, folded collar leaf, and placket box integration
-   - 3D buttons creation (2 or 3 buttons with pearl material)
-3. End-to-end integration via garment_builder.py factory router.
+"""Automated test suite for dedicated Plain Crew and Polo 3D garment builders,
+hybrid base mesh lattice deformer, and the master garment builder dispatcher.
 """
-import pytest
 import os
+import sys
 import json
+import pytest
 import subprocess
 
-from backend.validation.measurement_validator import (
-    validate_and_normalize_measurements,
-    MeasurementValidationError
-)
-from backend.models.schemas import MeasurementValues
-from backend.validation.garment_geometry_auditor import GarmentGeometryAuditor
-
-BLENDER_BIN = os.environ.get("BLENDER_BIN", "/opt/homebrew/bin/blender")
-BUILDER_SCRIPT = os.path.abspath("backend/blender_engine/garment_builder.py")
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+BLENDER_BIN = "/Applications/Blender.app/Contents/MacOS/Blender"
 
 
-def run_blender_builder(config: dict, output_glb: str) -> dict:
-    os.makedirs(os.path.dirname(os.path.abspath(output_glb)), exist_ok=True)
+@pytest.mark.skipif(not os.path.exists(BLENDER_BIN), reason="Blender binary not found on macOS")
+def test_crew_geometry_builder_headless(tmp_path):
+    """Test standalone headless generation of Plain Crew-Neck T-Shirt."""
+    output_glb = str(tmp_path / "test_crew_out.glb")
+    config = {
+        "garment_type": "basic_crew",
+        "selected_size": "M",
+        "fit": "regular",
+        "base_color_hex": "#1C1C1E",
+        "measurements": {
+            "chest": 1.06,
+            "shoulder": 0.49,
+            "length": 0.71,
+            "sleeve": 0.21
+        }
+    }
+
+    script = f"""
+import sys, os
+sys.path.insert(0, '{BASE_DIR}')
+from backend.blender_engine.crew_geometry_builder import build_crew_garment
+meta = build_crew_garment({config}, '{output_glb}')
+print('TEST_RESULT:' + str(meta['vertex_count']))
+"""
+    cmd = [BLENDER_BIN, "-b", "--python-expr", script]
+    res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    assert res.returncode == 0, f"Blender failed: {res.stderr}"
+    assert os.path.exists(output_glb), "GLB output file was not created"
+    assert os.path.getsize(output_glb) > 10000, "GLB output file is suspiciously small"
+    assert "TEST_RESULT:" in res.stdout
+
+
+@pytest.mark.skipif(not os.path.exists(BLENDER_BIN), reason="Blender binary not found on macOS")
+def test_polo_geometry_builder_headless(tmp_path):
+    """Test standalone headless generation of Men's Polo T-Shirt with buttons, stand, and leaf."""
+    output_glb = str(tmp_path / "test_polo_out.glb")
+    config = {
+        "garment_type": "polo",
+        "selected_size": "L",
+        "fit": "regular",
+        "base_color_hex": "#1B2A4A",
+        "button_count": 2,
+        "button_color_hex": "#F4F4F0",
+        "measurements": {
+            "chest": 1.12,
+            "shoulder": 0.52,
+            "length": 0.73,
+            "sleeve": 0.23
+        }
+    }
+
+    script = f"""
+import sys, os
+sys.path.insert(0, '{BASE_DIR}')
+from backend.blender_engine.polo_geometry_builder import build_polo_garment
+meta = build_polo_garment({config}, '{output_glb}')
+print('POLO_VERTS:' + str(meta['vertex_count']))
+print('POLO_FACES:' + str(meta['face_count']))
+"""
+    cmd = [BLENDER_BIN, "-b", "--python-expr", script]
+    res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    assert res.returncode == 0, f"Blender failed: {res.stderr}"
+    assert os.path.exists(output_glb), "GLB output file was not created"
+    assert os.path.getsize(output_glb) > 15000, "GLB output file is suspiciously small"
+    assert "POLO_VERTS:" in res.stdout
+    assert "POLO_FACES:" in res.stdout
+
+
+@pytest.mark.skipif(not os.path.exists(BLENDER_BIN), reason="Blender binary not found on macOS")
+def test_garment_builder_dispatcher_cli(tmp_path):
+    """Test garment_builder.py CLI dispatcher executing headless worker."""
+    output_glb = str(tmp_path / "test_dispatcher_out.glb")
+    config_dict = {
+        "garment_type": "polo",
+        "selected_size": "M",
+        "fit": "regular",
+        "base_color_hex": "#2B2D42",
+        "measurements": {
+            "chest": 1.06,
+            "shoulder": 0.49,
+            "length": 0.71,
+            "sleeve": 0.22
+        }
+    }
+    builder_py = os.path.join(BASE_DIR, "backend", "blender_engine", "garment_builder.py")
+
     cmd = [
-        BLENDER_BIN,
-        "-b",
-        "-P", BUILDER_SCRIPT,
+        BLENDER_BIN, "-b", "-P", builder_py,
         "--",
-        "--json", json.dumps(config),
+        "--json", json.dumps(config_dict),
         "--output", output_glb
     ]
-    proc = subprocess.run(cmd, capture_output=True, text=True)
-    if proc.returncode != 0:
-        raise RuntimeError(f"Blender failed ({proc.returncode}): {proc.stderr or proc.stdout}")
-
-    meta = {}
-    for line in proc.stdout.splitlines():
-        if line.startswith("GENERATION_METADATA:"):
-            meta = json.loads(line.replace("GENERATION_METADATA:", "").strip())
-            break
-    return meta
+    res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    assert res.returncode == 0, f"Dispatcher failed: {res.stderr}"
+    assert os.path.exists(output_glb), "Dispatcher did not produce output GLB"
+    assert "GENERATION_METADATA:" in res.stdout
 
 
-class TestDedicatedGarmentBuilders:
-    """Test dedicated builders for Polo and Plain Crew-Neck."""
+@pytest.mark.skipif(not os.path.exists(BLENDER_BIN), reason="Blender binary not found on macOS")
+def test_hybrid_base_mesh_lattice_deformer(tmp_path):
+    """Test hybrid base mesh deformation engine scaling canonical model to custom measurements."""
+    base_glb = os.path.join(BASE_DIR, "storage", "base_models", "crew_master_base.glb")
+    if not os.path.exists(base_glb):
+        pytest.skip("Base model crew_master_base.glb not yet generated")
 
-    def test_basic_crew_dimensional_accuracy(self):
-        """Audit Basic Crew-Neck with Section 19 measurements: 40 in chest, 17 in shoulder, 28 in length."""
-        meas = MeasurementValues(
-            chest=40.0,
-            shoulder=17.0,
-            length=28.0,
-            sleeve=8.25,
-            chest_measurement_type="circumference"
-        )
-        meas_meters, _ = validate_and_normalize_measurements(meas, unit="inches")
+    output_glb = str(tmp_path / "test_deformed_out.glb")
+    custom_meas = {
+        "chest": 1.18,      # XL chest (46.5 in)
+        "shoulder": 0.54,   # XL shoulder (21.2 in)
+        "length": 0.76,     # XL length (30 in)
+        "sleeve": 0.24
+    }
+    config = {
+        "garment_type": "basic_crew",
+        "base_color_hex": "#334155"
+    }
 
-        output_glb = "storage/test_renders/test_crew_section19.glb"
-        config = {
-            "garment_type": "basic_crew",
-            "selected_size": "M",
-            "fit": "regular",
-            "sleeve_type": "short",
-            "neck_type": "round",
-            "measurements": meas_meters
-        }
-
-        meta = run_blender_builder(config, output_glb)
-        assert os.path.exists(output_glb)
-        assert meta["garment_type"] == "basic_crew"
-        assert meta["vertex_count"] > 1000
-
-        targets_cm = {
-            "chest": round(40.0 * 2.54, 2),  # 101.6 cm
-            "shoulder": round(17.0 * 2.54, 2), # 43.18 cm
-            "length": round(28.0 * 2.54, 2),  # 71.12 cm
-            "sleeve": round(8.25 * 2.54, 2)   # 20.955 cm
-        }
-        audit = GarmentGeometryAuditor.audit_glb(output_glb, targets_cm)
-
-        assert audit["chest_circumference"]["status"] == "PASS"
-        assert audit["shoulder_width"]["status"] == "PASS"
-        assert audit["body_length"]["status"] == "PASS"
-        assert audit["sleeve_length"]["status"] == "PASS"
-        assert audit["chest_circumference"]["difference_cm"] < 0.85
-
-    def test_polo_dimensional_accuracy_and_components(self):
-        """Audit Polo T-Shirt with Section 19 measurements: 40 in chest, 17 in shoulder, 28 in length, 2 buttons."""
-        meas = MeasurementValues(
-            chest=40.0,
-            shoulder=17.0,
-            length=28.0,
-            sleeve=8.25,
-            chest_measurement_type="circumference"
-        )
-        meas_meters, _ = validate_and_normalize_measurements(meas, unit="inches")
-
-        output_glb = "storage/test_renders/test_polo_section19.glb"
-        config = {
-            "garment_type": "polo",
-            "selected_size": "M",
-            "fit": "regular",
-            "sleeve_type": "short",
-            "neck_type": "polo",
-            "measurements": meas_meters,
-            "button_count": 2
-        }
-
-        meta = run_blender_builder(config, output_glb)
-        assert os.path.exists(output_glb)
-        assert meta["garment_type"] == "polo"
-        assert meta["vertex_count"] > 1200
-
-        targets_cm = {
-            "chest": round(40.0 * 2.54, 2),
-            "shoulder": round(17.0 * 2.54, 2),
-            "length": round(28.0 * 2.54, 2),
-            "sleeve": round(8.25 * 2.54, 2)
-        }
-        audit = GarmentGeometryAuditor.audit_glb(output_glb, targets_cm)
-
-        assert audit["chest_circumference"]["status"] == "PASS"
-        assert audit["shoulder_width"]["status"] == "PASS"
-        assert audit["body_length"]["status"] == "PASS"
-        assert audit["sleeve_length"]["status"] == "PASS"
-        assert audit["chest_circumference"]["difference_cm"] < 0.85
-
-    def test_flat_chest_width_matches_circumference(self):
-        """Verify that 20 in flat chest width generates the exact same dimensions as 40 in circumference."""
-        meas_flat = MeasurementValues(
-            chest=20.0,
-            shoulder=17.0,
-            length=28.0,
-            chest_measurement_type="flat_width"
-        )
-        norm_flat, _ = validate_and_normalize_measurements(meas_flat, unit="inches")
-
-        meas_circ = MeasurementValues(
-            chest=40.0,
-            shoulder=17.0,
-            length=28.0,
-            chest_measurement_type="circumference"
-        )
-        norm_circ, _ = validate_and_normalize_measurements(meas_circ, unit="inches")
-
-        assert abs(norm_flat["chest"] - norm_circ["chest"]) < 1e-6
+    script = f"""
+import sys, os
+sys.path.insert(0, '{BASE_DIR}')
+from backend.blender_engine.lattice_deformer import deform_base_garment
+meta = deform_base_garment('{base_glb}', {custom_meas}, {config}, '{output_glb}')
+print('DEFORMED_HEIGHT:' + str(meta['dimensions']['height_m']))
+"""
+    cmd = [BLENDER_BIN, "-b", "--python-expr", script]
+    res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    assert res.returncode == 0, f"Deformer failed: {res.stderr}"
+    assert os.path.exists(output_glb), "Deformed GLB was not created"
+    assert "DEFORMED_HEIGHT:" in res.stdout

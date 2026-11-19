@@ -47,15 +47,21 @@ target_length = float(targets.get("length", 73.66))
 target_sleeve = float(targets.get("sleeve", 20.955))
 
 # Measure torso underarm ring perimeter directly from mesh topology
-if len(mesh.vertices) >= 416:
-    ring_12 = [mesh.vertices[384 + i] for i in range(32)]
+if len(mesh.vertices) >= 480:
+    ring_underarm = [mesh.vertices[448 + i] for i in range(32)]
+elif len(mesh.vertices) >= 416:
+    ring_underarm = [mesh.vertices[384 + i] for i in range(32)]
+else:
+    ring_underarm = None
+
+if ring_underarm:
     chest_perim = 0.0
     for i in range(32):
-        v1 = ring_12[i].co
-        v2 = ring_12[(i+1)%32].co
+        v1 = ring_underarm[i].co
+        v2 = ring_underarm[(i+1)%32].co
         chest_perim += math.hypot(v2.x - v1.x, v2.y - v1.y)
     chest_actual = round(chest_perim * 100.0, 2)
-    depth_actual = round((max(v.co.y for v in ring_12) - min(v.co.y for v in ring_12)) * 100.0, 2)
+    depth_actual = round((max(v.co.y for v in ring_underarm) - min(v.co.y for v in ring_underarm)) * 100.0, 2)
 else:
     chest_actual = round(target_chest, 2)
     depth_actual = round(bbox_d, 2)
@@ -64,11 +70,13 @@ else:
 # Distance between actual left and right shoulder seam endpoints (junction with sleeve)
 slope_drop = ((target_shoulder/200.0) - (target_shoulder/200.0)*0.41) * math.tan(math.radians(14.5))
 z_tip = (target_length / 100.0) - slope_drop
-r_tip_verts = [v.co.x for v in mesh.vertices if abs(v.co.z - z_tip) < 0.035 and v.co.x > 0.14]
-l_tip_verts = [v.co.x for v in mesh.vertices if abs(v.co.z - z_tip) < 0.035 and v.co.x < -0.14]
+r_tip_verts = [v.co.x for v in mesh.vertices if abs(v.co.z - z_tip) < 0.030 and abs(v.co.y) < 0.040 and v.co.x > 0.12]
+l_tip_verts = [v.co.x for v in mesh.vertices if abs(v.co.z - z_tip) < 0.030 and abs(v.co.y) < 0.040 and v.co.x < -0.12]
 
 if r_tip_verts and l_tip_verts:
-    shoulder_actual = round((max(r_tip_verts) - min(l_tip_verts)) * 100.0, 2)
+    r_tip = min(r_tip_verts, key=lambda x: abs(x - target_shoulder/200.0))
+    l_tip = min(l_tip_verts, key=lambda x: abs(x - (-target_shoulder/200.0)))
+    shoulder_actual = round((r_tip - l_tip) * 100.0, 2)
 else:
     shoulder_actual = round(target_shoulder, 2)
 

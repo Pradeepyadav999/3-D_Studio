@@ -72,11 +72,12 @@ storage/renders/*
 storage/test_models/
 storage/test_phase1_models/
 storage/test_outputs/
-storage/test_renders/
 storage/*.glb
 storage/debug_garment.glb
 storage/test_texture.png
 
-# Retain Sample Catalog Assets
+# Retain Sample Catalog Assets & Canonical Master Base Meshes
 !storage/sample_products/
 !storage/sample_size_chart.png
+!storage/base_models/
+!storage/base_models/*
