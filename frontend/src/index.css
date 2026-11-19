@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-studio-950 text-studio-100 font-sans;
+    color-scheme: dark;
+  }
+}
+
+/* Custom dark studio scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #141619;
+}
+::-webkit-scrollbar-thumb {
+  background: #2a2f38;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3b82f6;
+}
+
+/* Subtle panel borders */
+.studio-border {
+  border-color: #262b34;
+}
+
+.studio-panel {
+  background-color: #141619;
+  border-color: #22262d;
+}
+
+.studio-card {
+  background-color: #1a1d22;
+  border-color: #2a2f38;
+}
+
+/* Glowing active accents */
+.accent-glow-blue {
+  box-shadow: 0 0 15px -3px rgba(59, 130, 246, 0.4);
+}

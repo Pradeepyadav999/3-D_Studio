@@ -1,0 +1,30 @@
+{
+  "id": "fk_colorblock_polo_tricolor",
+  "title": "U.S. Polo Assn. Men Color Block Polo Neck T-Shirt",
+  "brand": "U.S. Polo Assn.",
+  "category": "T-Shirts",
+  "price": "\u20b9899",
+  "rating": 4.5,
+  "description": "Dynamic tricolor color-block polo shirt featuring navy, optic white, and varsity red horizontal chest blocks with ribbed collar.",
+  "specifications": {
+    "Fit": "Regular Fit",
+    "Neck": "Polo Neck",
+    "Sleeve": "Short Sleeve",
+    "Fabric": "Cotton Piqu\u00e9",
+    "Pattern": "Colorblock",
+    "Collar": "Folded Polo Collar",
+    "Placket": "2-Button Placket",
+    "Side Vents": "Tennis Tail Side Slits"
+  },
+  "color_name": "Neck",
+  "base_color_hex": "#1E293B",
+  "collar_color_hex": "#1E293B",
+  "neck_type": "polo",
+  "sleeve_type": "short",
+  "button_count": 2,
+  "images": {
+    "front": "/storage/sample_products/fk_colorblock_polo_tricolor/front.jpg",
+    "back": "/storage/sample_products/fk_colorblock_polo_tricolor/back.jpg",
+    "detail": "/storage/sample_products/fk_colorblock_polo_tricolor/detail.jpg"
+  }
+}

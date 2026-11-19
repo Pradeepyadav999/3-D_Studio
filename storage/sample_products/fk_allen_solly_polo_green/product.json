@@ -1,0 +1,30 @@
+{
+  "id": "fk_allen_solly_polo_green",
+  "title": "Allen Solly Solid Men Polo Neck Green T-Shirt",
+  "brand": "Allen Solly",
+  "category": "T-Shirts",
+  "price": "\u20b9699",
+  "rating": 4.4,
+  "description": "Forest green regular-fit polo shirt crafted from breathable cotton piqu\u00e9 with heritage gold stag crest emblem on the left chest.",
+  "specifications": {
+    "Fit": "Regular Fit",
+    "Neck": "Polo Neck",
+    "Sleeve": "Short Sleeve",
+    "Fabric": "Cotton Piqu\u00e9",
+    "Pattern": "Solid with Chest Crest",
+    "Collar": "Folded Polo Collar",
+    "Placket": "2-Button Placket",
+    "Side Vents": "Tennis Tail Side Slits"
+  },
+  "color_name": "Green",
+  "base_color_hex": "#648671",
+  "collar_color_hex": "#648671",
+  "neck_type": "polo",
+  "sleeve_type": "short",
+  "button_count": 2,
+  "images": {
+    "front": "/storage/sample_products/fk_allen_solly_polo_green/front.jpg",
+    "back": "/storage/sample_products/fk_allen_solly_polo_green/back.jpg",
+    "detail": "/storage/sample_products/fk_allen_solly_polo_green/detail.jpg"
+  }
+}

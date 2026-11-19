@@ -1,0 +1,30 @@
+{
+  "id": "fk_plain_polo_navy",
+  "title": "Roadster Solid Men Polo Neck Classic Navy Blue T-Shirt",
+  "brand": "Roadster",
+  "category": "T-Shirts",
+  "price": "\u20b9599",
+  "rating": 4.3,
+  "description": "Men's solid regular-fit polo shirt crafted from 100% combed cotton piqu\u00e9 with ribbed collar, 2-button placket, and tennis tail side vents.",
+  "specifications": {
+    "Fit": "Regular Fit",
+    "Neck": "Polo Neck",
+    "Sleeve": "Short Sleeve",
+    "Fabric": "Cotton Piqu\u00e9",
+    "Pattern": "Solid",
+    "Collar": "Folded Polo Collar",
+    "Placket": "2-Button Placket",
+    "Side Vents": "Tennis Tail Side Slits"
+  },
+  "color_name": "Blue",
+  "base_color_hex": "#1E293B",
+  "collar_color_hex": "#1E293B",
+  "neck_type": "polo",
+  "sleeve_type": "short",
+  "button_count": 2,
+  "images": {
+    "front": "/storage/sample_products/fk_plain_polo_navy/front.jpg",
+    "back": "/storage/sample_products/fk_plain_polo_navy/back.jpg",
+    "detail": "/storage/sample_products/fk_plain_polo_navy/detail.jpg"
+  }
+}

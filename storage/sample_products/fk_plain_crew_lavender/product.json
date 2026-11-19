@@ -1,0 +1,28 @@
+{
+  "id": "fk_plain_crew_lavender",
+  "title": "Minimalist Classic Pure Cotton Plain Lavender Crew Neck T-Shirt",
+  "brand": "Basics Studio",
+  "category": "T-Shirts",
+  "price": "\u20b9399",
+  "rating": 4.4,
+  "description": "Essential plain regular-fit crew neck t-shirt crafted from 100% combed cotton jersey without any printed graphics.",
+  "specifications": {
+    "Fit": "Regular Fit",
+    "Neck": "Round / Crew Neck",
+    "Sleeve": "Short Sleeve",
+    "Fabric": "100% Combed Cotton Single Jersey",
+    "Pattern": "Solid",
+    "Color": "Lavender"
+  },
+  "base_color_hex": "#8A7AB2",
+  "color_name": "Lavender",
+  "neck_type": "round",
+  "sleeve_type": "short",
+  "primary_image_url": "/storage/sample_products/fk_plain_crew_lavender/front.jpg",
+  "back_image_url": "/storage/sample_products/fk_plain_crew_lavender/back.jpg",
+  "images": {
+    "front": "/storage/sample_products/fk_plain_crew_lavender/front.jpg",
+    "back": "/storage/sample_products/fk_plain_crew_lavender/back.jpg",
+    "detail": "/storage/sample_products/fk_plain_crew_lavender/detail.jpg"
+  }
+}

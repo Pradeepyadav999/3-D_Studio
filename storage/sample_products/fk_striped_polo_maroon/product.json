@@ -1,0 +1,30 @@
+{
+  "id": "fk_striped_polo_maroon",
+  "title": "Peter England Striped Men Polo Neck Maroon T-Shirt",
+  "brand": "Peter England",
+  "category": "T-Shirts",
+  "price": "\u20b9749",
+  "rating": 4.3,
+  "description": "Yarn-dyed horizontal striped men's polo shirt in rich burgundy maroon with crisp white nautical micro-stripes.",
+  "specifications": {
+    "Fit": "Regular Fit",
+    "Neck": "Polo Neck",
+    "Sleeve": "Short Sleeve",
+    "Fabric": "Cotton Piqu\u00e9",
+    "Pattern": "Striped",
+    "Collar": "Folded Polo Collar",
+    "Placket": "2-Button Placket",
+    "Side Vents": "Tennis Tail Side Slits"
+  },
+  "color_name": "Maroon",
+  "base_color_hex": "#6B1D2F",
+  "collar_color_hex": "#6B1D2F",
+  "neck_type": "polo",
+  "sleeve_type": "short",
+  "button_count": 2,
+  "images": {
+    "front": "/storage/sample_products/fk_striped_polo_maroon/front.jpg",
+    "back": "/storage/sample_products/fk_striped_polo_maroon/back.jpg",
+    "detail": "/storage/sample_products/fk_striped_polo_maroon/detail.jpg"
+  }
+}

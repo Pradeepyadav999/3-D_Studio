@@ -1,0 +1,30 @@
+{
+  "id": "fk_vebnor_contrast_polo_pink",
+  "title": "VeBNoR Colorblock Men Polo Neck Pink T-Shirt",
+  "brand": "VeBNoR",
+  "category": "T-Shirts",
+  "price": "\u20b9259",
+  "rating": 4.2,
+  "description": "Coral pink men's polo shirt with signature black contrast collar, matching placket trim, pearl buttons, and tailored athletic fit.",
+  "specifications": {
+    "Fit": "Regular Fit",
+    "Neck": "Polo Neck",
+    "Sleeve": "Short Sleeve",
+    "Fabric": "Cotton Piqu\u00e9",
+    "Pattern": "Solid with Contrast Collar",
+    "Collar": "Folded Polo Collar",
+    "Placket": "2-Button Placket",
+    "Side Vents": "Tennis Tail Side Slits"
+  },
+  "color_name": "Pink",
+  "base_color_hex": "#CA5D72",
+  "collar_color_hex": "#0C0B0E",
+  "neck_type": "polo",
+  "sleeve_type": "short",
+  "button_count": 2,
+  "images": {
+    "front": "/storage/sample_products/fk_vebnor_contrast_polo_pink/front.jpg",
+    "back": "/storage/sample_products/fk_vebnor_contrast_polo_pink/back.jpg",
+    "detail": "/storage/sample_products/fk_vebnor_contrast_polo_pink/detail.jpg"
+  }
+}

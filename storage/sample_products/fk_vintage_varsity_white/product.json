@@ -1,0 +1,44 @@
+{
+  "id": "fk_vintage_varsity_white",
+  "title": "HIGHLANDER Men Typography Print Round Neck White T-Shirt",
+  "brand": "Highlander",
+  "category": "T-Shirts",
+  "price": "\u20b9379",
+  "rating": 4.1,
+  "ratings_count": "9,850",
+  "description": "Classic white regular-fit round-neck T-shirt with varsity athletic Brooklyn crest print. Bio-washed soft cotton fabric with durable ribbed collar.",
+  "specifications": {
+    "Fit": "Regular Fit",
+    "Neck": "Round / Crew Neck",
+    "Sleeve": "Short Sleeve",
+    "Fabric": "100% Bio-Washed Cotton",
+    "Pattern": "Typography & Emblem",
+    "Occasion": "Daily Casual",
+    "Wash Care": "Machine wash"
+  },
+  "color_name": "Optical White",
+  "base_color_hex": "#F3F4F6",
+  "base_color_rgb": [
+    243,
+    244,
+    246
+  ],
+  "collar_color_rgb": [
+    225,
+    228,
+    232
+  ],
+  "secondary_colors": [
+    "#1E3A8A",
+    "#DC2626"
+  ],
+  "graphic_type": "varsity",
+  "graphic_description": "Collegiate Brooklyn athletic shield emblem with varsity lettering on front chest.",
+  "neck_type": "round",
+  "sleeve_type": "short",
+  "images": {
+    "front": "/storage/sample_products/fk_vintage_varsity_white/front.jpg",
+    "back": "/storage/sample_products/fk_vintage_varsity_white/back.jpg",
+    "detail": "/storage/sample_products/fk_vintage_varsity_white/detail.jpg"
+  }
+}

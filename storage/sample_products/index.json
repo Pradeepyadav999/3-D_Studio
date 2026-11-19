@@ -1,0 +1,129 @@
+[
+  {
+    "id": "fk_plain_polo_navy",
+    "title": "Roadster Solid Men Polo Neck Classic Navy Blue T-Shirt",
+    "brand": "Roadster",
+    "price": "\u20b9599",
+    "rating": 4.3,
+    "base_color_hex": "#1E293B",
+    "collar_color_hex": "#1E293B",
+    "color_name": "Blue",
+    "thumbnail": "/storage/sample_products/fk_plain_polo_navy/front.jpg",
+    "graphic_description": "Phase 1 Polo: Solid with folded collar and placket."
+  },
+  {
+    "id": "fk_vebnor_contrast_polo_pink",
+    "title": "VeBNoR Colorblock Men Polo Neck Pink T-Shirt",
+    "brand": "VeBNoR",
+    "price": "\u20b9259",
+    "rating": 4.2,
+    "base_color_hex": "#CA5D72",
+    "collar_color_hex": "#0C0B0E",
+    "color_name": "Pink",
+    "thumbnail": "/storage/sample_products/fk_vebnor_contrast_polo_pink/front.jpg",
+    "graphic_description": "Phase 1 Polo: Solid with Contrast Collar with folded collar and placket."
+  },
+  {
+    "id": "fk_allen_solly_polo_green",
+    "title": "Allen Solly Solid Men Polo Neck Green T-Shirt",
+    "brand": "Allen Solly",
+    "price": "\u20b9699",
+    "rating": 4.4,
+    "base_color_hex": "#648671",
+    "collar_color_hex": "#648671",
+    "color_name": "Green",
+    "thumbnail": "/storage/sample_products/fk_allen_solly_polo_green/front.jpg",
+    "graphic_description": "Phase 1 Polo: Solid with Chest Crest with folded collar and placket."
+  },
+  {
+    "id": "fk_colorblock_polo_tricolor",
+    "title": "U.S. Polo Assn. Men Color Block Polo Neck T-Shirt",
+    "brand": "U.S. Polo Assn.",
+    "price": "\u20b9899",
+    "rating": 4.5,
+    "base_color_hex": "#1E293B",
+    "collar_color_hex": "#1E293B",
+    "color_name": "Neck",
+    "thumbnail": "/storage/sample_products/fk_colorblock_polo_tricolor/front.jpg",
+    "graphic_description": "Phase 1 Polo: Colorblock with folded collar and placket."
+  },
+  {
+    "id": "fk_striped_polo_maroon",
+    "title": "Peter England Striped Men Polo Neck Maroon T-Shirt",
+    "brand": "Peter England",
+    "price": "\u20b9749",
+    "rating": 4.3,
+    "base_color_hex": "#6B1D2F",
+    "collar_color_hex": "#6B1D2F",
+    "color_name": "Maroon",
+    "thumbnail": "/storage/sample_products/fk_striped_polo_maroon/front.jpg",
+    "graphic_description": "Phase 1 Polo: Striped with folded collar and placket."
+  },
+  {
+    "id": "fk_printed_polo_geometric",
+    "title": "Flying Machine Men Geometric Micro Printed Polo Neck T-Shirt",
+    "brand": "Flying Machine",
+    "price": "\u20b9649",
+    "rating": 4.1,
+    "base_color_hex": "#253342",
+    "collar_color_hex": "#253342",
+    "color_name": "Neck",
+    "thumbnail": "/storage/sample_products/fk_printed_polo_geometric/front.jpg",
+    "graphic_description": "Phase 1 Polo: Printed with folded collar and placket."
+  },
+  {
+    "id": "fk_graphic_crew_black",
+    "title": "Roadster Men Graphic Printed Pure Cotton Crew Neck Black T-Shirt",
+    "brand": "Roadster",
+    "price": "\u20b9499",
+    "rating": 4.3,
+    "base_color_hex": "#1C1C1E",
+    "color_name": "Onyx Black",
+    "thumbnail": "/storage/sample_products/fk_graphic_crew_black/front.jpg",
+    "graphic_description": "Pacific Coastline vintage sun and wave illustration with typography banner across the chest."
+  },
+  {
+    "id": "fk_plain_crew_lavender",
+    "title": "Minimalist Classic Pure Cotton Plain Lavender Crew Neck T-Shirt",
+    "brand": "Basics Studio",
+    "price": "\u20b9399",
+    "rating": 4.4,
+    "base_color_hex": "#8A7AB2",
+    "color_name": "Lavender",
+    "thumbnail": "/storage/sample_products/fk_plain_crew_lavender/front.jpg",
+    "graphic_description": "Clean plain crew neck garment with ribbed collar and zero phantom prints."
+  },
+  {
+    "id": "fk_dual_graphic_streetwear",
+    "title": "Speed Division Front & Back Graphic Print Charcoal T-Shirt",
+    "brand": "Speed Division",
+    "price": "\u20b9799",
+    "rating": 4.6,
+    "base_color_hex": "#26282C",
+    "color_name": "Charcoal Black",
+    "thumbnail": "/storage/sample_products/fk_dual_graphic_streetwear/front.jpg",
+    "graphic_description": "Front left chest Urban badge AND large back Speed Division motor club artwork."
+  },
+  {
+    "id": "fk_vintage_varsity_white",
+    "title": "HIGHLANDER Men Typography Print Round Neck White T-Shirt",
+    "brand": "Highlander",
+    "price": "\u20b9379",
+    "rating": 4.1,
+    "base_color_hex": "#F3F4F6",
+    "color_name": "Optical White",
+    "thumbnail": "/storage/sample_products/fk_vintage_varsity_white/front.jpg",
+    "graphic_description": "Collegiate Brooklyn athletic shield emblem with varsity lettering on front chest."
+  },
+  {
+    "id": "fk_minimalist_crest_navy",
+    "title": "PUMA Men Solid Classic Crew Neck Navy Blue T-Shirt",
+    "brand": "Puma",
+    "price": "\u20b9699",
+    "rating": 4.5,
+    "base_color_hex": "#1E293B",
+    "color_name": "Navy Blue",
+    "thumbnail": "/storage/sample_products/fk_minimalist_crest_navy/front.jpg",
+    "graphic_description": "Clean athletic sport crest placed on upper left chest."
+  }
+]

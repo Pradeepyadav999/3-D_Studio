@@ -1,0 +1,30 @@
+{
+  "id": "fk_printed_polo_geometric",
+  "title": "Flying Machine Men Geometric Micro Printed Polo Neck T-Shirt",
+  "brand": "Flying Machine",
+  "category": "T-Shirts",
+  "price": "\u20b9649",
+  "rating": 4.1,
+  "description": "Smart casual all-over geometric micro-print polo shirt with solid collar and placket detail.",
+  "specifications": {
+    "Fit": "Regular Fit",
+    "Neck": "Polo Neck",
+    "Sleeve": "Short Sleeve",
+    "Fabric": "Cotton Piqu\u00e9",
+    "Pattern": "Printed",
+    "Collar": "Folded Polo Collar",
+    "Placket": "2-Button Placket",
+    "Side Vents": "Tennis Tail Side Slits"
+  },
+  "color_name": "Neck",
+  "base_color_hex": "#253342",
+  "collar_color_hex": "#253342",
+  "neck_type": "polo",
+  "sleeve_type": "short",
+  "button_count": 2,
+  "images": {
+    "front": "/storage/sample_products/fk_printed_polo_geometric/front.jpg",
+    "back": "/storage/sample_products/fk_printed_polo_geometric/back.jpg",
+    "detail": "/storage/sample_products/fk_printed_polo_geometric/detail.jpg"
+  }
+}

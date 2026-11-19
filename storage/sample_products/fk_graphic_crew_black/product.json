@@ -1,0 +1,45 @@
+{
+  "id": "fk_graphic_crew_black",
+  "title": "Roadster Men Graphic Printed Pure Cotton Crew Neck Black T-Shirt",
+  "brand": "Roadster",
+  "category": "T-Shirts",
+  "price": "\u20b9499",
+  "rating": 4.3,
+  "ratings_count": "18,420",
+  "description": "Black printed regular-fit T-shirt with vintage Pacific Coastline graphic on the chest. Crafted from 100% breathable combed cotton with rib knit crew collar for all-day comfort.",
+  "specifications": {
+    "Fit": "Regular Fit",
+    "Neck": "Round / Crew Neck",
+    "Sleeve": "Short Sleeve",
+    "Fabric": "100% Combed Cotton",
+    "Pattern": "Graphic Print",
+    "Occasion": "Casual Streetwear",
+    "Wash Care": "Machine wash cold with like colors"
+  },
+  "color_name": "Onyx Black",
+  "base_color_hex": "#1C1C1E",
+  "base_color_rgb": [
+    28,
+    28,
+    30
+  ],
+  "collar_color_rgb": [
+    20,
+    20,
+    22
+  ],
+  "secondary_colors": [
+    "#F59E0B",
+    "#EF4444",
+    "#14B8A6"
+  ],
+  "graphic_type": "surf",
+  "graphic_description": "Pacific Coastline vintage sun and wave illustration with typography banner across the chest.",
+  "neck_type": "round",
+  "sleeve_type": "short",
+  "images": {
+    "front": "/storage/sample_products/fk_graphic_crew_black/front.jpg",
+    "back": "/storage/sample_products/fk_graphic_crew_black/back.jpg",
+    "detail": "/storage/sample_products/fk_graphic_crew_black/detail.jpg"
+  }
+}

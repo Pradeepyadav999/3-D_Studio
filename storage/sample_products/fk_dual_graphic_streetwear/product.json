@@ -1,0 +1,28 @@
+{
+  "id": "fk_dual_graphic_streetwear",
+  "title": "Speed Division Oversized Front & Back Graphic Print Charcoal T-Shirt",
+  "brand": "Speed Division",
+  "category": "T-Shirts",
+  "price": "\u20b9799",
+  "rating": 4.6,
+  "description": "Streetwear relaxed-fit charcoal t-shirt featuring front left chest emblem and oversized custom back speed division motor club artwork.",
+  "specifications": {
+    "Fit": "Relaxed Fit",
+    "Neck": "Round / Crew Neck",
+    "Sleeve": "Short Sleeve",
+    "Fabric": "Heavyweight 240 GSM Combed Cotton",
+    "Pattern": "Graphic Print Front and Back",
+    "Color": "Charcoal Black"
+  },
+  "base_color_hex": "#26282C",
+  "color_name": "Charcoal Black",
+  "neck_type": "round",
+  "sleeve_type": "short",
+  "primary_image_url": "/storage/sample_products/fk_dual_graphic_streetwear/front.jpg",
+  "back_image_url": "/storage/sample_products/fk_dual_graphic_streetwear/back.jpg",
+  "images": {
+    "front": "/storage/sample_products/fk_dual_graphic_streetwear/front.jpg",
+    "back": "/storage/sample_products/fk_dual_graphic_streetwear/back.jpg",
+    "detail": "/storage/sample_products/fk_dual_graphic_streetwear/detail.jpg"
+  }
+}

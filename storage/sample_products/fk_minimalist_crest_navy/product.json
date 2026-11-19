@@ -1,0 +1,43 @@
+{
+  "id": "fk_minimalist_crest_navy",
+  "title": "PUMA Men Solid Classic Crew Neck Navy Blue T-Shirt",
+  "brand": "Puma",
+  "category": "T-Shirts",
+  "price": "\u20b9699",
+  "rating": 4.5,
+  "ratings_count": "24,310",
+  "description": "Navy blue regular-fit solid T-shirt featuring iconic chest sports crest. Soft single jersey cotton with excellent moisture management.",
+  "specifications": {
+    "Fit": "Regular Fit",
+    "Neck": "Round / Crew Neck",
+    "Sleeve": "Short Sleeve",
+    "Fabric": "100% Pure Single Jersey Cotton",
+    "Pattern": "Solid with Chest Crest",
+    "Occasion": "Active & Casual",
+    "Wash Care": "Machine wash warm"
+  },
+  "color_name": "Navy Blue",
+  "base_color_hex": "#1E293B",
+  "base_color_rgb": [
+    30,
+    41,
+    59
+  ],
+  "collar_color_rgb": [
+    24,
+    32,
+    46
+  ],
+  "secondary_colors": [
+    "#FFFFFF"
+  ],
+  "graphic_type": "crest",
+  "graphic_description": "Clean athletic sport crest placed on upper left chest.",
+  "neck_type": "round",
+  "sleeve_type": "short",
+  "images": {
+    "front": "/storage/sample_products/fk_minimalist_crest_navy/front.jpg",
+    "back": "/storage/sample_products/fk_minimalist_crest_navy/back.jpg",
+    "detail": "/storage/sample_products/fk_minimalist_crest_navy/detail.jpg"
+  }
+}
