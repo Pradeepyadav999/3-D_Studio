@@ -5,7 +5,7 @@ import { ProductInputPanel } from './components/ProductInputPanel';
 import { GarmentViewport } from './components/GarmentViewport';
 import { ProductGarmentProperties } from './components/ProductGarmentProperties';
 
-import { ModelMetadata, ShadingMode } from './types/garment';
+import { ModelMetadata, ShadingMode, GarmentType } from './types/garment';
 import { MeasurementValues } from './types/measurements';
 import { ProductDetails, SampleProductSummary } from './types/product';
 import { api } from './services/api';
@@ -17,6 +17,7 @@ export const App: React.FC = () => {
   // E-Commerce Product State
   const [sampleProducts, setSampleProducts] = useState<SampleProductSummary[]>([]);
   const [currentProduct, setCurrentProduct] = useState<ProductDetails | null>(null);
+  const [garmentType, setGarmentType] = useState<GarmentType>('basic_crew');
   const [fit, setFit] = useState<string>('regular');
 
   // Direct Size Chart Parameters (Flipkart Standard: Chest, Shoulder, Length, Sleeve)
@@ -69,6 +70,13 @@ export const App: React.FC = () => {
       setCurrentProduct(prod);
       setCurrentStep(2);
 
+      // Auto-detect garment type from product, while allowing user override
+      if (prod.vision_analysis?.neckline_type === 'polo' || prod.specifications?.Neck === 'Polo Neck') {
+        setGarmentType('polo');
+      } else {
+        setGarmentType('basic_crew');
+      }
+
       const measSig = `${measurements.chest}_${measurements.shoulder}_${measurements.length}_${measurements.sleeve}_${unit}`;
       const cacheKey = `${sampleId}_${measSig}`;
       if (modelCache[cacheKey]) {
@@ -95,6 +103,13 @@ export const App: React.FC = () => {
       const prod = await api.analyzeProduct({ url });
       setCurrentProduct(prod);
       setCurrentStep(2);
+
+      if (prod.vision_analysis?.neckline_type === 'polo' || prod.specifications?.Neck === 'Polo Neck') {
+        setGarmentType('polo');
+      } else {
+        setGarmentType('basic_crew');
+      }
+
       trigger3DGeneration(prod.product_id, measurements, unit);
     } catch (err: any) {
       setGenerationError(err.message || 'Failed to analyze Flipkart product URL');
@@ -119,6 +134,13 @@ export const App: React.FC = () => {
       const prod = await api.uploadProductImages(formData);
       setCurrentProduct(prod);
       setCurrentStep(2);
+
+      if (prod.vision_analysis?.neckline_type === 'polo' || prod.specifications?.Neck === 'Polo Neck') {
+        setGarmentType('polo');
+      } else {
+        setGarmentType('basic_crew');
+      }
+
       trigger3DGeneration(prod.product_id, measurements, unit);
     } catch (err: any) {
       setGenerationError(err.message || 'Failed to analyze uploaded images');
@@ -144,6 +166,7 @@ export const App: React.FC = () => {
     try {
       const job = await api.generate3DFromProduct({
         product_id: productId,
+        garment_type: garmentType,
         selected_size: 'custom',
         fit: fit,
         include_texture: true,
@@ -248,6 +271,8 @@ export const App: React.FC = () => {
         {/* LEFT PANEL: Product URL / Samples / Custom Upload / Vision Analysis / Flipkart Size Chart */}
         <div className="w-84 md:w-96 h-full flex-shrink-0">
           <ProductInputPanel
+            garmentType={garmentType}
+            onGarmentTypeChange={setGarmentType}
             onAnalyzeUrl={handleAnalyzeUrl}
             onSelectSample={handleSelectSample}
             onUploadCustomImages={handleUploadCustomImages}

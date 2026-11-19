@@ -4,14 +4,22 @@ from pydantic import BaseModel, Field
 from datetime import datetime, timezone
 
 class MeasurementValues(BaseModel):
-    chest: float = Field(..., description="Chest circumference in specified unit")
-    shoulder: float = Field(..., description="Shoulder width from edge to edge in specified unit")
-    length: float = Field(..., description="Garment length from high point shoulder to hem")
-    sleeve: float = Field(..., description="Sleeve length from shoulder seam to sleeve cuff")
+    chest: float = Field(..., description="Chest measurement value in specified unit")
+    chest_measurement_type: str = Field(
+        default="circumference",
+        description="Definition of chest measurement: 'circumference' (full 360 loop) or 'flat_width' (pit-to-pit across garment)"
+    )
+    shoulder: float = Field(..., description="Shoulder width from seam to seam in specified unit")
+    length: float = Field(..., description="Garment length from high point shoulder (HPS) to hem")
+    sleeve: Optional[float] = Field(None, description="Optional sleeve length; derived proportionally if omitted")
     waist: Optional[float] = Field(None, description="Optional waist circumference")
     hem: Optional[float] = Field(None, description="Optional bottom hem circumference")
     neck: Optional[float] = Field(None, description="Optional neck circumference or collar width")
     sleeve_opening: Optional[float] = Field(None, description="Optional sleeve cuff circumference")
+    measurement_sources: Optional[Dict[str, str]] = Field(
+        default_factory=dict,
+        description="Source tracking: 'user_provided' vs 'calculated_estimate'"
+    )
 
 class SizeChartData(BaseModel):
     chart_id: str
@@ -48,8 +56,9 @@ class ModelMetadata(BaseModel):
     selected_size: str
     fit: str
     unit: str
-    input_measurements: Dict[str, Optional[float]]
+    input_measurements: Dict[str, Any]
     measurements_in_meters: Dict[str, Optional[float]]
+    measurement_sources: Optional[Dict[str, str]] = Field(default_factory=dict)
     vertex_count: int
     face_count: int
     dimensions: Dict[str, float]  # width_m, height_m, depth_m
@@ -128,6 +137,7 @@ class ProductAnalysisRequest(BaseModel):
 
 class Generate3DFromProductRequest(BaseModel):
     product_id: str
+    garment_type: Optional[str] = Field(default=None, description="Garment silhouette: 'polo' or 'basic_crew'")
     selected_size: str = Field(default="M", description="Garment size: S, M, L, XL, XXL")
     fit: str = Field(default="regular", description="Fit profile: regular, slim, relaxed")
     dominant_color_hex: Optional[str] = None

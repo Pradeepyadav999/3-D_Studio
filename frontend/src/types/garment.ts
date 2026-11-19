@@ -1,5 +1,6 @@
 import { MeasurementValues } from './measurements';
 
+export type GarmentType = 'basic_crew' | 'polo';
 export type FitType = 'regular' | 'slim' | 'relaxed';
 export type SleeveType = 'short' | 'long';
 export type NeckType = 'round' | 'v_neck';

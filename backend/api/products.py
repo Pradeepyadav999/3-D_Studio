@@ -202,6 +202,7 @@ async def generate_3d_garment(request: Generate3DFromProductRequest):
     """
     job_resp = await BlenderService.generate_from_product(
         product_id=request.product_id,
+        garment_type=request.garment_type,
         selected_size=request.selected_size,
         fit=request.fit,
         dominant_color_hex=request.dominant_color_hex,

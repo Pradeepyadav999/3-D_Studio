@@ -1,12 +1,16 @@
+export type ChestMeasurementType = 'circumference' | 'flat_width';
+
 export interface MeasurementValues {
   chest: number;
+  chest_measurement_type?: ChestMeasurementType;
   shoulder: number;
   length: number;
-  sleeve: number;
+  sleeve?: number | null;
   waist?: number | null;
   hem?: number | null;
   neck?: number | null;
   sleeve_opening?: number | null;
+  measurement_sources?: Record<string, string>;
 }
 
 export interface SizeChartData {

@@ -55,6 +55,7 @@ export const api = {
   // 5. Generate 3D garment from product with size card measurements
   async generate3DFromProduct(params: {
     product_id: string;
+    garment_type?: string;
     selected_size?: string;
     fit?: string;
     dominant_color_hex?: string;
@@ -67,6 +68,7 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         product_id: params.product_id,
+        garment_type: params.garment_type,
         selected_size: params.selected_size || 'M',
         fit: params.fit || 'regular',
         dominant_color_hex: params.dominant_color_hex,

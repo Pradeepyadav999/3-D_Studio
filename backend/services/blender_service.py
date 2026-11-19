@@ -36,6 +36,7 @@ class BlenderService:
     async def generate_from_product(
         cls,
         product_id: str,
+        garment_type: Optional[str] = None,
         selected_size: str = "M",
         fit: str = "regular",
         dominant_color_hex: Optional[str] = None,
@@ -155,10 +156,27 @@ class BlenderService:
         }
         JOBS[job_id] = job_state
 
-        resolved_neck_type = prod_data.get("neck_type") or vision_analysis.neckline_type
+        # Explicit garment type override from user input (Polo vs Plain T-shirt)
+        if garment_type:
+            gt_clean = garment_type.lower().strip()
+            if gt_clean in ["polo", "polo_tshirt"]:
+                resolved_neck_type = "polo"
+                collar_style = "folded_polo"
+                fabric_texture = "cotton_pique"
+                active_garment_type = "polo"
+            else:
+                resolved_neck_type = "round"
+                collar_style = "ribbed_crew"
+                fabric_texture = "cotton_jersey"
+                active_garment_type = "basic_crew"
+        else:
+            resolved_neck_type = prod_data.get("neck_type") or vision_analysis.neckline_type
+            active_garment_type = "polo" if resolved_neck_type == "polo" else "basic_crew"
+            collar_style = getattr(vision_analysis, "collar_style", "ribbed_crew" if resolved_neck_type != "polo" else "folded_polo")
+            fabric_texture = getattr(vision_analysis, "fabric_texture_type", "cotton_jersey" if resolved_neck_type != "polo" else "cotton_pique")
 
         worker_config = {
-            "garment_type": "regular_tshirt",
+            "garment_type": active_garment_type,
             "selected_size": selected_size,
             "fit": fit,
             "sleeve_type": vision_analysis.sleeve_type,
@@ -168,16 +186,16 @@ class BlenderService:
             "normal_path": normal_path,
             "roughness_path": roughness_path,
             "base_color_hex": base_color,
-            "button_count": getattr(vision_analysis, "button_count", 0),
+            "button_count": getattr(vision_analysis, "button_count", 0 if active_garment_type != "polo" else 2),
             "button_color_hex": getattr(vision_analysis, "button_color_hex", "#F8F8F4"),
             "collar_color_hex": getattr(vision_analysis, "collar_color_hex", None),
-            "collar_style": getattr(vision_analysis, "collar_style", "ribbed_crew"),
-            "fabric_texture_type": getattr(vision_analysis, "fabric_texture_type", "cotton_jersey")
+            "collar_style": collar_style,
+            "fabric_texture_type": fabric_texture
         }
 
         # Run Blender worker asynchronously
         config_obj = GarmentConfiguration(
-            garment_type="regular_tshirt",
+            garment_type=active_garment_type,
             fit=fit,
             sleeve_type=vision_analysis.sleeve_type,
             neck_type=resolved_neck_type,
@@ -320,14 +338,21 @@ class BlenderService:
             except Exception as audit_err:
                 logger.warning(f"Accuracy audit error: {audit_err}")
 
-            # Construct comprehensive metadata model
+            # Construct comprehensive metadata model with clean numeric floats
+            clean_meas_meters = {
+                k: float(v) for k, v in norm_measurements.items()
+                if isinstance(v, (int, float))
+            }
+            meas_sources = norm_measurements.get("measurement_sources", {})
+
             model_meta = ModelMetadata(
                 garment_type=original_config.garment_type,
                 selected_size=original_config.selected_size,
                 fit=original_config.fit,
                 unit=original_config.unit,
                 input_measurements=original_config.measurements.model_dump(),
-                measurements_in_meters=norm_measurements,
+                measurements_in_meters=clean_meas_meters,
+                measurement_sources=meas_sources,
                 vertex_count=meta_dict.get("vertex_count", 3854),
                 face_count=meta_dict.get("face_count", 7784),
                 dimensions=meta_dict.get("dimensions", {"width_m": 0.82, "height_m": 0.71, "depth_m": 0.28}),

@@ -72,6 +72,7 @@ storage/renders/*
 storage/test_models/
 storage/test_phase1_models/
 storage/test_outputs/
+storage/test_renders/
 storage/*.glb
 storage/debug_garment.glb
 storage/test_texture.png

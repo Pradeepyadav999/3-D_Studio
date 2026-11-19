@@ -63,7 +63,7 @@ export const MeasurementTable: React.FC<MeasurementTableProps> = ({
         chest: Math.round(vals.chest * factor * 10) / 10,
         shoulder: Math.round(vals.shoulder * factor * 10) / 10,
         length: Math.round(vals.length * factor * 10) / 10,
-        sleeve: Math.round(vals.sleeve * factor * 10) / 10,
+        sleeve: vals.sleeve ? Math.round(vals.sleeve * factor * 10) / 10 : null,
         waist: vals.waist ? Math.round(vals.waist * factor * 10) / 10 : null,
         hem: vals.hem ? Math.round(vals.hem * factor * 10) / 10 : null,
         neck: vals.neck ? Math.round(vals.neck * factor * 10) / 10 : null,
@@ -158,10 +158,11 @@ export const MeasurementTable: React.FC<MeasurementTableProps> = ({
                 </td>
                 {sizes.map((sz) => {
                   const isSelected = sz === selectedSize;
-                  const val = chartData.sizes[sz]?.[row.key];
+                  const rawVal = chartData.sizes[sz]?.[row.key];
+                  const val = typeof rawVal === 'number' ? rawVal : null;
                   const conf = chartData.cell_confidences?.[sz]?.[row.key];
                   const isLowConf = conf !== undefined && conf < 0.75;
-                  const isZeroOrMissing = val === undefined || val === null || val <= 0;
+                  const isZeroOrMissing = val === null || val <= 0;
 
                   return (
                     <td
@@ -174,7 +175,7 @@ export const MeasurementTable: React.FC<MeasurementTableProps> = ({
                         <input
                           type="number"
                           step="0.5"
-                          value={val !== null && val !== undefined && val > 0 ? val : ''}
+                          value={val !== null && val > 0 ? val : ''}
                           placeholder="-"
                           onChange={(e) => handleCellChange(sz, row.key, e.target.value)}
                           className={`w-14 text-center font-mono py-1 rounded border text-xs focus:outline-none transition-all ${

@@ -147,7 +147,9 @@ export const SizeComparisonModal: React.FC<SizeComparisonModalProps> = ({
                   <td className="p-3 font-sans font-medium text-studio-300">Sleeve Length</td>
                   {sizes.map((sz) => {
                     const val = chartData.sizes[sz]?.sleeve || 0;
-                    const diff = baseMeasurements ? val - baseMeasurements.sleeve : 0;
+                    const diff = baseMeasurements && baseMeasurements.sleeve !== null && baseMeasurements.sleeve !== undefined
+                      ? val - baseMeasurements.sleeve
+                      : 0;
                     return (
                       <td key={sz} className="p-3 text-center">
                         <span className="font-semibold text-white">{val} {chartData.unit}</span>

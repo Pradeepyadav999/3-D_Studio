@@ -4,9 +4,12 @@ import {
   Tag, Palette, Shirt, ExternalLink, RefreshCw, Ruler, AlertCircle, X
 } from 'lucide-react';
 import { ProductDetails, SampleProductSummary } from '../types/product';
-import { MeasurementValues } from '../types/measurements';
+import { MeasurementValues, ChestMeasurementType } from '../types/measurements';
+import { GarmentType } from '../types/garment';
 
 interface ProductInputPanelProps {
+  garmentType: GarmentType;
+  onGarmentTypeChange: (type: GarmentType) => void;
   onAnalyzeUrl: (url: string) => Promise<void>;
   onSelectSample: (sampleId: string) => Promise<void>;
   onUploadCustomImages: (frontFile: File, backFile?: File) => Promise<void>;
@@ -26,6 +29,8 @@ interface ProductInputPanelProps {
 }
 
 export const ProductInputPanel: React.FC<ProductInputPanelProps> = ({
+  garmentType,
+  onGarmentTypeChange,
   onAnalyzeUrl,
   onSelectSample,
   onUploadCustomImages,
@@ -72,7 +77,9 @@ export const ProductInputPanel: React.FC<ProductInputPanelProps> = ({
       chest: Math.max(0, Math.round(measurements.chest * factor * 10) / 10),
       shoulder: Math.max(0, Math.round(measurements.shoulder * factor * 10) / 10),
       length: Math.max(0, Math.round(measurements.length * factor * 10) / 10),
-      sleeve: Math.max(0, Math.round(measurements.sleeve * factor * 10) / 10),
+      sleeve: measurements.sleeve !== undefined && measurements.sleeve !== null 
+        ? Math.max(0, Math.round(measurements.sleeve * factor * 10) / 10)
+        : null,
     });
   };
 
@@ -473,6 +480,63 @@ export const ProductInputPanel: React.FC<ProductInputPanelProps> = ({
             </div>
           </div>
 
+          {/* Garment Type Selector: Plain Crew-Neck vs Polo T-Shirt */}
+          <div className="space-y-2 pt-3 border-t border-studio-800">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-mono uppercase font-bold text-white flex items-center space-x-1.5">
+                <Shirt className="w-3.5 h-3.5 text-indigo-400" />
+                <span>Garment Type</span>
+              </h4>
+              <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-semibold border ${
+                garmentType === 'polo' 
+                  ? 'bg-indigo-950/80 border-indigo-700/60 text-indigo-300' 
+                  : 'bg-blue-950/80 border-blue-700/60 text-blue-300'
+              }`}>
+                {garmentType === 'polo' ? 'Polo Neck' : 'Plain Crew Neck'}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              {/* Option 1: Plain Crew-Neck T-Shirt */}
+              <button
+                type="button"
+                onClick={() => onGarmentTypeChange('basic_crew')}
+                className={`p-2.5 rounded-xl border text-left transition-all ${
+                  garmentType === 'basic_crew'
+                    ? 'bg-blue-950/60 border-blue-500 shadow-md shadow-blue-500/20 ring-1 ring-blue-500'
+                    : 'bg-studio-950 border-studio-800 hover:border-studio-700 opacity-75'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-bold text-white">Plain T-Shirt</span>
+                  {garmentType === 'basic_crew' && <CheckCircle2 className="w-3.5 h-3.5 text-blue-400" />}
+                </div>
+                <p className="text-[10px] text-studio-400 leading-tight">
+                  Hollow round crew-neck, 1x1 ribbed collar, single jersey cotton.
+                </p>
+              </button>
+
+              {/* Option 2: Polo T-Shirt */}
+              <button
+                type="button"
+                onClick={() => onGarmentTypeChange('polo')}
+                className={`p-2.5 rounded-xl border text-left transition-all ${
+                  garmentType === 'polo'
+                    ? 'bg-indigo-950/60 border-indigo-500 shadow-md shadow-indigo-500/20 ring-1 ring-indigo-500'
+                    : 'bg-studio-950 border-studio-800 hover:border-studio-700 opacity-75'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-bold text-white">Polo T-Shirt</span>
+                  {garmentType === 'polo' && <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400" />}
+                </div>
+                <p className="text-[10px] text-studio-400 leading-tight">
+                  Folded 3D collar, stand, front button placket, cotton piqué knit.
+                </p>
+              </button>
+            </div>
+          </div>
+
           {/* Size Chart Parameters (Flipkart / E-Commerce Standard) */}
           <div className="space-y-3 pt-3 border-t border-studio-800">
             <div className="flex items-center justify-between">
@@ -482,7 +546,7 @@ export const ProductInputPanel: React.FC<ProductInputPanelProps> = ({
                   <span>Size Chart Parameters</span>
                 </h4>
                 <p className="text-[10px] text-studio-400 mt-0.5">
-                  Flipkart / E-Commerce standard sizing parameters
+                  Direct physical garment measurements
                 </p>
               </div>
 
@@ -505,6 +569,37 @@ export const ProductInputPanel: React.FC<ProductInputPanelProps> = ({
                   }`}
                 >
                   INCH
+                </button>
+              </div>
+            </div>
+
+            {/* Chest Definition Toggle: Full Circumference vs Flat Width */}
+            <div className="flex items-center justify-between bg-studio-950 border border-studio-800 rounded-lg px-2.5 py-1.5 text-[10px]">
+              <span className="text-studio-400 font-mono font-medium">Chest Definition:</span>
+              <div className="flex space-x-1">
+                <button
+                  type="button"
+                  onClick={() => onMeasurementsChange({ ...measurements, chest_measurement_type: 'circumference' })}
+                  className={`px-2 py-0.5 rounded transition-colors font-mono ${
+                    (measurements.chest_measurement_type || 'circumference') === 'circumference'
+                      ? 'bg-blue-600 text-white font-bold'
+                      : 'text-studio-400 hover:text-white'
+                  }`}
+                  title="Full 360-degree circumference around torso"
+                >
+                  Full Loop (360°)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onMeasurementsChange({ ...measurements, chest_measurement_type: 'flat_width' })}
+                  className={`px-2 py-0.5 rounded transition-colors font-mono ${
+                    measurements.chest_measurement_type === 'flat_width'
+                      ? 'bg-blue-600 text-white font-bold'
+                      : 'text-studio-400 hover:text-white'
+                  }`}
+                  title="Flat pit-to-pit width straight across front of garment"
+                >
+                  Flat Width (Pit-to-Pit)
                 </button>
               </div>
             </div>
@@ -642,7 +737,11 @@ export const ProductInputPanel: React.FC<ProductInputPanelProps> = ({
               ) : (
                 <>
                   <Sparkles className="w-4 h-4 text-amber-300" />
-                  <span>{hasModel ? '⚡ Regenerate 3D with Size Card' : '✨ Generate 3D Garment from Size Card'}</span>
+                  <span>
+                    {hasModel
+                      ? (garmentType === 'polo' ? '⚡ Regenerate 3D Polo T-Shirt' : '⚡ Regenerate 3D Plain Crew T-Shirt')
+                      : (garmentType === 'polo' ? '✨ Generate 3D Polo T-Shirt' : '✨ Generate 3D Plain Crew T-Shirt')}
+                  </span>
                 </>
               )}
             </button>
