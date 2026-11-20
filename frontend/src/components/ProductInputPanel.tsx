@@ -54,11 +54,14 @@ export const ProductInputPanel: React.FC<ProductInputPanelProps> = ({
   const [backFile, setBackFile] = useState<File | null>(null);
 
   const flipkartPresets = [
-    { tag: '38" (S)', chestCm: 96, chestIn: 38, shoulderCm: 44, shoulderIn: 17.3, lengthCm: 68, lengthIn: 26.8, sleeveCm: 20, sleeveIn: 7.9 },
-    { tag: '40" (M)', chestCm: 101, chestIn: 40, shoulderCm: 46, shoulderIn: 18.1, lengthCm: 70, lengthIn: 27.6, sleeveCm: 21, sleeveIn: 8.3 },
-    { tag: '42" (L)', chestCm: 106, chestIn: 42, shoulderCm: 48, shoulderIn: 18.9, lengthCm: 72, lengthIn: 28.3, sleeveCm: 22, sleeveIn: 8.7 },
-    { tag: '44" (XL)', chestCm: 112, chestIn: 44, shoulderCm: 50, shoulderIn: 19.7, lengthCm: 74, lengthIn: 29.1, sleeveCm: 23, sleeveIn: 9.1 },
-    { tag: '46" (XXL)', chestCm: 118, chestIn: 46.5, shoulderCm: 52, shoulderIn: 20.5, lengthCm: 76, lengthIn: 29.9, sleeveCm: 24, sleeveIn: 9.4 },
+    { tag: '36" (XS)', chestCm: 94, chestIn: 37, shoulderCm: 43, shoulderIn: 16.9, lengthCm: 66, lengthIn: 26.0, sleeveCm: 19, sleeveIn: 7.5 },
+    { tag: '38" (S)', chestCm: 100, chestIn: 39.4, shoulderCm: 46, shoulderIn: 18.1, lengthCm: 68, lengthIn: 26.8, sleeveCm: 20, sleeveIn: 7.9 },
+    { tag: '40" (M)', chestCm: 106, chestIn: 41.7, shoulderCm: 49, shoulderIn: 19.3, lengthCm: 71, lengthIn: 28.0, sleeveCm: 21, sleeveIn: 8.3 },
+    { tag: '42" (L)', chestCm: 112, chestIn: 44.1, shoulderCm: 52, shoulderIn: 20.5, lengthCm: 73, lengthIn: 28.7, sleeveCm: 22, sleeveIn: 8.7 },
+    { tag: '44" (XL)', chestCm: 118, chestIn: 46.5, shoulderCm: 55, shoulderIn: 21.7, lengthCm: 75, lengthIn: 29.5, sleeveCm: 23, sleeveIn: 9.1 },
+    { tag: '46" (XXL)', chestCm: 124, chestIn: 48.8, shoulderCm: 58, shoulderIn: 22.8, lengthCm: 77, lengthIn: 30.3, sleeveCm: 24, sleeveIn: 9.4 },
+    { tag: '48" (3XL)', chestCm: 130, chestIn: 51.2, shoulderCm: 61, shoulderIn: 24.0, lengthCm: 79, lengthIn: 31.1, sleeveCm: 25, sleeveIn: 9.8 },
+    { tag: '50" (4XL)', chestCm: 136, chestIn: 53.5, shoulderCm: 64, shoulderIn: 25.2, lengthCm: 81, lengthIn: 31.9, sleeveCm: 26, sleeveIn: 10.2 },
   ];
 
   const handleFieldChange = (field: keyof MeasurementValues, value: number) => {
@@ -152,6 +155,63 @@ export const ProductInputPanel: React.FC<ProductInputPanelProps> = ({
 
       {/* Input Section according to Active Tab */}
       <div className="p-4 border-b studio-border">
+        {/* Upfront Garment Style Selector: Ask User upfront (Polo vs Plain T-Shirt) */}
+        <div className="mb-3.5 p-2.5 bg-studio-950/90 rounded-xl border border-studio-800 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-mono font-bold text-white uppercase flex items-center space-x-1.5">
+              <Shirt className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Garment Style Selection</span>
+            </span>
+            <span className={`text-[9px] font-mono px-2 py-0.5 rounded font-semibold border ${
+              garmentType === 'polo' 
+                ? 'bg-indigo-950 border-indigo-700/60 text-indigo-300' 
+                : 'bg-blue-950 border-blue-700/60 text-blue-300'
+            }`}>
+              {garmentType === 'polo' ? 'Polo T-Shirt' : 'Plain T-Shirt'}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            {/* Option 1: Plain T-Shirt */}
+            <button
+              type="button"
+              onClick={() => onGarmentTypeChange('basic_crew')}
+              className={`p-2.5 rounded-lg border text-left transition-all ${
+                garmentType === 'basic_crew'
+                  ? 'bg-blue-950/70 border-blue-500 shadow-md ring-1 ring-blue-500'
+                  : 'bg-studio-900 border-studio-800 hover:border-studio-700 opacity-75'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-0.5">
+                <span className="text-xs font-bold text-white">Plain T-Shirt</span>
+                {garmentType === 'basic_crew' && <CheckCircle2 className="w-3.5 h-3.5 text-blue-400" />}
+              </div>
+              <p className="text-[10px] text-studio-400 leading-tight">
+                Crew-neck, 1x1 rib knit
+              </p>
+            </button>
+
+            {/* Option 2: Polo T-Shirt */}
+            <button
+              type="button"
+              onClick={() => onGarmentTypeChange('polo')}
+              className={`p-2.5 rounded-lg border text-left transition-all ${
+                garmentType === 'polo'
+                  ? 'bg-indigo-950/70 border-indigo-500 shadow-md ring-1 ring-indigo-500'
+                  : 'bg-studio-900 border-studio-800 hover:border-studio-700 opacity-75'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-0.5">
+                <span className="text-xs font-bold text-white">Polo T-Shirt</span>
+                {garmentType === 'polo' && <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400" />}
+              </div>
+              <p className="text-[10px] text-studio-400 leading-tight">
+                Turned collar & placket
+              </p>
+            </button>
+          </div>
+        </div>
+
         {activeTab === 'url' && (
           <form onSubmit={handleUrlSubmit} className="space-y-3">
             <div>

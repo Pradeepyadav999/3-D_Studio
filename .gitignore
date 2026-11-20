@@ -42,6 +42,7 @@ yarn-error.log*
 *.swp
 *.swo
 *~
+*.blend1
 
 # Scratch & Logs
 scratch/
@@ -76,8 +77,6 @@ storage/*.glb
 storage/debug_garment.glb
 storage/test_texture.png
 
-# Retain Sample Catalog Assets & Canonical Master Base Meshes
+# Retain Sample Catalog Assets
 !storage/sample_products/
 !storage/sample_size_chart.png
-!storage/base_models/
-!storage/base_models/*

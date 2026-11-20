@@ -1,544 +1,548 @@
-"""Dedicated High-Realism Parametric Plain Crew-Neck T-Shirt Builder for Blender (bpy).
-Constructs a photorealistic standalone Men's Crew-Neck T-Shirt matching Pacdora 3D standards:
-- Genuine open hollow round neckline with anatomical forward tilt (11 degrees)
-- 3D toroidal dual-layer rolled 1x1 ribbed collar band with 2.2 mm cloth thickness
-- Natural catenary fabric drape folds and thoracic curvature
-- Anatomical set-in sleeves with 28-degree downward resting pitch and folded hems
-- Physical fabric thickness (1.4 mm Solidify modifier) and organic subdivision surface
 """
+High-Precision Parametric Plain Crew-Neck T-Shirt Geometry Builder.
+Pacdora-Grade Anatomical Realism:
+- True Anatomical Shoulders: 12-14 cm Deltoid Depth in Y
+- Smooth Tangent Neck Scoop (Zero sharp kinks or collar spikes)
+- Pectoral Swell & Realistic Torso Contours
+- Relaxed A-Pose Sleeves: 45° drape, 14° forward pitch, open 3D cuffs
+- Continuous 2-Manifold Quad Topology with Smooth Cloth Shading
+- Labeled Vertex Groups for Strict Phase 3 Measurement Deformation
+"""
+
 import sys
 import os
-
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
-
 import math
-import numpy as np
+from typing import Dict, Any, Optional, Tuple, List
 
 try:
     import bpy
     import bmesh
-    from mathutils import Vector, Matrix
+    from mathutils import Vector
 except ImportError:
     bpy = None
     bmesh = None
     Vector = None
-    Matrix = None
-
-from backend.blender_engine.measurement_utils import (
-    solve_ellipse_radii, calculate_anatomical_landmarks
-)
 
 
-def build_crew_mesh(bm, uv_layer, measurements: dict, fit: str = "regular") -> dict:
+def solve_ellipse_radii(circ: float, aspect: float = 1.48) -> Tuple[float, float]:
+    """Solves Ramanujan ellipse circumference for half-axes a (width) and b (depth)."""
+    r = aspect
+    b = circ / (math.pi * (3.0 * (r + 1.0) - math.sqrt((3.0 * r + 1.0) * (r + 3.0))))
+    a = r * b
+    for _ in range(40):
+        curr_c = math.pi * (3.0 * (a + b) - math.sqrt((3.0 * a + b) * (a + 3.0 * b)))
+        error = curr_c - circ
+        if abs(error) < 1e-8:
+            break
+        delta = 1e-6
+        b_plus = b + delta
+        a_plus = r * b_plus
+        c_plus = math.pi * (3.0 * (a_plus + b_plus) - math.sqrt((3.0 * a_plus + b_plus) * (a_plus + 3.0 * b_plus)))
+        dc_db = (c_plus - curr_c) / delta
+        b = b - error / dc_db
+        a = r * b
+    return a, b
+
+
+def build_crew_mesh(config: Optional[Dict[str, Any]] = None,
+                    output_blend: Optional[str] = None,
+                    output_glb: Optional[str] = None) -> Any:
     """
-    Constructs the complete 3D crew-neck garment mesh inside a bmesh instance.
+    Builds the master reference Plain Crew-Neck T-Shirt mesh in Blender.
     """
-    chest_m = float(measurements.get("chest", 1.06))
-    shoulder_m = float(measurements.get("shoulder", 0.49))
-    length_m = float(measurements.get("length", 0.71))
-    sleeve_m = float(measurements.get("sleeve", 0.21))
+    if bpy is None:
+        raise RuntimeError("Blender bpy module is required to execute build_crew_mesh.")
 
-    # Solve Ramanujan athletic torso cross-sections
-    aspect = 2.45
-    if fit == "slim":
-        aspect = 2.38
-    elif fit == "relaxed":
-        aspect = 2.52
+    config = config or {}
+    measurements = config.get("measurements", {})
 
-    hem_m = float(measurements.get("hem") or (chest_m * 0.98))
-    waist_m = float(measurements.get("waist") or (chest_m * 0.96))
+    chest_circ = float(measurements.get("chest", 1.06))
+    shoulder_w = float(measurements.get("shoulder", 0.49))
+    body_len = float(measurements.get("length", 0.71))
+    sleeve_len = float(measurements.get("sleeve", 0.21))
+    aspect = float(config.get("aspect", 1.48))
 
-    # 32-sided polygon discretization compensation factor:
-    poly_factor = 1.0110
-    a_hem, b_hem = solve_ellipse_radii(hem_m * poly_factor, aspect * 0.97)
-    a_waist, b_waist = solve_ellipse_radii(waist_m * poly_factor, aspect)
-    a_chest, b_chest = solve_ellipse_radii(chest_m * poly_factor, aspect * 1.01)
+    shoulder_half_w = shoulder_w / 2.0
+    neck_half_w = 0.092
+    z_hps = body_len
 
-    # Vertical landmarks
-    z_hem = 0.0
-    armhole_depth = max(0.18, shoulder_m * 0.44)
-    z_underarm = length_m - armhole_depth
-    shoulder_half_w = shoulder_m / 2.0
-    neck_half_w = shoulder_half_w * 0.41  # 41% of shoulder span for classic round crew
-
-    z_hps = length_m
-    slope_drop = (shoulder_half_w - neck_half_w) * math.tan(math.radians(14.5))
+    slope_drop = 0.046
     z_shoulder_tip = z_hps - slope_drop
 
-    neck_front_drop = 0.082
-    neck_back_drop = 0.024
-    z_neck_front = z_hps - neck_front_drop
-    z_neck_back = z_hps - neck_back_drop
+    armhole_depth = 0.215
+    z_underarm = z_hps - armhole_depth
+    z_waist = z_hps * 0.40
+    z_hem = 0.0
 
-    # Topology grid resolution: 32 perimeter columns
+    neck_front_drop = 0.078
+    neck_back_drop = 0.024
+
+    a_chest, b_chest = solve_ellipse_radii(chest_circ, aspect)
+    a_waist = a_chest * 0.965
+    b_waist = b_chest * 0.965
+    a_hem = a_chest * 0.985
+    b_hem = b_chest * 0.985
+
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    scene = bpy.context.scene
+
+    mesh_data = bpy.data.meshes.new("CrewTShirtMesh")
+    obj = bpy.data.objects.new("PlainCrewTShirt", mesh_data)
+    scene.collection.objects.link(obj)
+    bpy.context.view_layer.objects.active = obj
+    obj.select_set(True)
+
+    bm = bmesh.new()
+    uv_layer = bm.loops.layers.uv.new("UVMap")
+
     N_COLS = 32
     N_RINGS_LOWER = 14
-    N_RINGS_MID = 5
+    N_RINGS_CHEST = 6
+    N_RINGS_SHOULDER = 5
 
+    vg_torso = set()
+    vg_front = set()
+    vg_back = set()
+    vg_hem = set()
+    vg_left_sh = set()
+    vg_right_sh = set()
+    vg_left_sl = set()
+    vg_right_sl = set()
+    vg_neckline = set()
+
+    # 1. LOWER TORSO
     torso_rings = []
+    for r_idx in range(N_RINGS_LOWER + 1):
+        t = r_idx / float(N_RINGS_LOWER)
+        z_curr = z_hem + t * z_underarm
 
-    # 1. LOWER TORSO (Hem to Underarm)
-    for r in range(N_RINGS_LOWER + 1):
-        t = r / float(N_RINGS_LOWER)
-        if t < 0.38:
-            s = t / 0.38
-            s_ease = 0.5 * (1.0 - math.cos(math.pi * s))
-            cur_a = a_hem * (1 - s_ease) + a_waist * s_ease
-            cur_b = b_hem * (1 - s_ease) + b_waist * s_ease
+        if t < 0.45:
+            u = t / 0.45
+            u_ease = 0.5 * (1.0 - math.cos(math.pi * u))
+            cur_a = a_hem * (1.0 - u_ease) + a_waist * u_ease
+            cur_b = b_hem * (1.0 - u_ease) + b_waist * u_ease
         else:
-            s = (t - 0.38) / 0.62
-            s_ease = 0.5 * (1.0 - math.cos(math.pi * s))
-            cur_a = a_waist * (1 - s_ease) + a_chest * s_ease
-            cur_b = b_waist * (1 - s_ease) + b_chest * s_ease
-
-        z_nom = z_hem + t * z_underarm
-        # Subtle upward curve at front hem center (Pacdora realism)
-        hem_curve = 0.014 * ((1.0 - t) ** 1.8)
-
-        # Catenary gravity drape along torso
-        drape_env = math.sin(math.pi * t) if (0.0 < t < 1.0) else 0.0
+            u = (t - 0.45) / 0.55
+            u_ease = 0.5 * (1.0 - math.cos(math.pi * u))
+            cur_a = a_waist * (1.0 - u_ease) + a_chest * u_ease
+            cur_b = b_waist * (1.0 - u_ease) + b_chest * u_ease
 
         ring = []
         for i in range(N_COLS):
-            theta = 2.0 * math.pi * i / float(N_COLS)
-            sin_th = math.sin(theta)
-            cos_th = math.cos(theta)
+            th = 2.0 * math.pi * i / float(N_COLS)
+            sin_th = math.sin(th)
+            cos_th = math.cos(th)
+            x = cur_a * cos_th
 
-            if sin_th > 0:
-                y = cur_b * sin_th * (1.0 + 0.03 * sin_th) + 0.004 * sin_th
-                vz = z_nom - hem_curve * (sin_th ** 2)
+            if sin_th >= 0:
+                y = cur_b * sin_th * (1.0 + 0.08 * sin_th * t)
             else:
-                y = cur_b * sin_th * (1.0 - 0.02 * abs(sin_th))
-                vz = z_nom - hem_curve * 0.7 * (sin_th ** 2)
+                y = cur_b * sin_th * (1.0 - 0.03 * abs(sin_th))
 
-            # Catenary drape perturbation
-            if 0 < r < N_RINGS_LOWER:
-                w_y = 0.0018 * drape_env * math.sin(3.0 * theta)
-                w_x = 0.0012 * drape_env * math.cos(2.0 * theta)
-                w_z = 0.0010 * drape_env * math.sin(2.0 * theta)
-                x = cur_a * cos_th + w_x
-                y += w_y
-                vz += w_z
-            else:
-                x = cur_a * cos_th
-
-            v = bm.verts.new((x, y, vz))
+            v = bm.verts.new((x, y, z_curr))
             ring.append(v)
+            vg_torso.add(v)
+            if r_idx == 0:
+                vg_hem.add(v)
+            if i < 16:
+                vg_front.add(v)
+            else:
+                vg_back.add(v)
         torso_rings.append(ring)
 
-    # Stitch lower torso
-    for r in range(N_RINGS_LOWER):
-        r1 = torso_rings[r]
-        r2 = torso_rings[r + 1]
+    for r_idx in range(N_RINGS_LOWER):
+        r1 = torso_rings[r_idx]
+        r2 = torso_rings[r_idx + 1]
         for i in range(N_COLS):
             i_next = (i + 1) % N_COLS
-            face = bm.faces.new([r1[i], r1[i_next], r2[i_next], r2[i]])
-            face.material_index = 0
-            is_front = (0 <= i < 16)
-            for loop in face.loops:
+            f = bm.faces.new([r1[i], r1[i_next], r2[i_next], r2[i]])
+            for loop in f.loops:
                 vx, vy, vz = loop.vert.co.x, loop.vert.co.y, loop.vert.co.z
+                u_coord = 0.25 - (vx / (2.2 * a_chest)) * 0.35 if vy >= 0 else 0.75 + (vx / (2.2 * a_chest)) * 0.35
                 v_coord = max(0.01, min(0.99, 0.08 + (vz / z_hps) * 0.82))
-                u_coord = 0.265 - (vx / (2.2 * a_chest)) * 0.38 if is_front else 0.735 + (vx / (2.2 * a_chest)) * 0.38
-                loop[uv_layer].uv = Vector((max(0.01, min(0.99, u_coord)), v_coord))
+                loop[uv_layer].uv = Vector((u_coord, v_coord))
 
-    # 2. MID-CHEST & ARMSCYE JUNCTION
-    for r in range(1, N_RINGS_MID + 1):
-        t_mid = r / float(N_RINGS_MID)
-        z_nom = z_underarm + t_mid * (z_neck_front - z_underarm)
+    # 2. MID TORSO
+    for r_idx in range(1, N_RINGS_CHEST + 1):
+        t = r_idx / float(N_RINGS_CHEST)
+        z_curr = z_underarm + t * (z_shoulder_tip - z_underarm) * 0.58
+        cur_a = a_chest * (1.0 - 0.015 * (t ** 1.1))
+        cur_b = b_chest * (1.0 + 0.04 * math.sin(math.pi * t))
 
-        scye_indent = 0.012 * math.sin(math.pi * (t_mid * 0.75))
-        cur_a = a_chest - scye_indent
-        cur_b = b_chest * (1.0 - 0.07 * t_mid)
-        pectoral_fullness = 0.004 * math.sin(math.pi * t_mid)
-
-        ring = []
-        for i in range(N_COLS):
-            theta = 2.0 * math.pi * i / float(N_COLS)
-            sin_th = math.sin(theta)
-            cos_th = math.cos(theta)
-
-            if sin_th > 0:
-                y = cur_b * sin_th * (1.0 + 0.03 * sin_th) + 0.005 * sin_th + pectoral_fullness * (sin_th ** 2)
-            else:
-                y = cur_b * sin_th * (1.0 - 0.02 * abs(sin_th)) - 0.002 * pectoral_fullness * (abs(sin_th) ** 1.5)
-
+        ring = [None] * N_COLS
+        for i in range(2, 15):
+            th = 2.0 * math.pi * i / float(N_COLS)
+            sin_th = math.sin(th)
+            cos_th = math.cos(th)
             x = cur_a * cos_th
-            v = bm.verts.new((x, y, z_nom))
-            ring.append(v)
+            y = cur_b * sin_th * (1.0 + 0.08 * sin_th)
+            v = bm.verts.new((x, y, z_curr))
+            ring[i] = v
+            vg_torso.add(v)
+            vg_front.add(v)
+
+        for i in range(18, 31):
+            th = 2.0 * math.pi * i / float(N_COLS)
+            sin_th = math.sin(th)
+            cos_th = math.cos(th)
+            x = cur_a * cos_th
+            y = cur_b * sin_th * (1.0 - 0.03 * abs(sin_th))
+            v = bm.verts.new((x, y, z_curr))
+            ring[i] = v
+            vg_torso.add(v)
+            vg_back.add(v)
+
         torso_rings.append(ring)
 
-    # Stitch mid-chest panels
     mid_start_r = N_RINGS_LOWER
-    for r in range(mid_start_r, mid_start_r + N_RINGS_MID):
-        r1 = torso_rings[r]
-        r2 = torso_rings[r + 1]
-
-        # Front panel (columns 2..13)
+    for r_idx in range(mid_start_r, mid_start_r + N_RINGS_CHEST):
+        r1 = torso_rings[r_idx]
+        r2 = torso_rings[r_idx + 1]
         for i in range(2, 14):
-            face = bm.faces.new([r1[i], r1[i + 1], r2[i + 1], r2[i]])
-            face.material_index = 0
-            for loop in face.loops:
+            f = bm.faces.new([r1[i], r1[i + 1], r2[i + 1], r2[i]])
+            for loop in f.loops:
                 vx, vy, vz = loop.vert.co.x, loop.vert.co.y, loop.vert.co.z
-                v_coord = max(0.01, min(0.99, 0.08 + (vz / z_hps) * 0.82))
-                u_coord = 0.265 - (vx / (2.2 * a_chest)) * 0.38
-                loop[uv_layer].uv = Vector((max(0.01, min(0.99, u_coord)), v_coord))
-
-        # Back panel (columns 18..29)
+                loop[uv_layer].uv = Vector((0.25 - (vx / (2.2 * a_chest)) * 0.35, max(0.01, min(0.99, 0.08 + (vz / z_hps) * 0.82))))
         for i in range(18, 30):
-            face = bm.faces.new([r1[i], r1[i + 1], r2[i + 1], r2[i]])
-            face.material_index = 0
-            for loop in face.loops:
+            f = bm.faces.new([r1[i], r1[i + 1], r2[i + 1], r2[i]])
+            for loop in f.loops:
                 vx, vy, vz = loop.vert.co.x, loop.vert.co.y, loop.vert.co.z
-                v_coord = max(0.01, min(0.99, 0.08 + (vz / z_hps) * 0.82))
-                u_coord = 0.735 + (vx / (2.2 * a_chest)) * 0.38
-                loop[uv_layer].uv = Vector((max(0.01, min(0.99, u_coord)), v_coord))
+                loop[uv_layer].uv = Vector((0.75 + (vx / (2.2 * a_chest)) * 0.35, max(0.01, min(0.99, 0.08 + (vz / z_hps) * 0.82))))
 
-    # 3. UPPER CHEST, SHOULDERS & ANATOMICAL CREW NECKLINE
-    N_RINGS_TOP = 4
+    # 3. UPPER CHEST, TRUE ANATOMICAL SHOULDERS & NECKLINE
+    # Smooth cosine-tangent scoop blending seamlessly with shoulder slope
     top_target_coords = [None] * N_COLS
+    y_neck_mid = 0.008
 
     for i in range(2, 15):
-        if i <= 5:
+        if i <= 5: # Right shoulder front
             u_sh = (5 - i) / 3.0
             x = neck_half_w + (shoulder_half_w - neck_half_w) * u_sh
-            z = z_hps - slope_drop * (0.35 * u_sh + 0.65 * (u_sh ** 1.2))
-            y = 0.008 * (1.0 - u_sh)
-        elif i >= 11:
+            z = z_hps - slope_drop * (u_sh ** 1.15)
+            y = y_neck_mid + 0.046 + 0.022 * u_sh
+        elif i >= 11: # Left shoulder front
             u_sh = (i - 11) / 3.0
             x = -(neck_half_w + (shoulder_half_w - neck_half_w) * u_sh)
-            z = z_hps - slope_drop * (0.35 * u_sh + 0.65 * (u_sh ** 1.2))
-            y = 0.008 * (1.0 - u_sh)
-        else:
-            # Front crew neckline horseshoe arc
-            u_n = (i - 5) / 6.0
-            arc_ang = math.pi * u_n
-            x = neck_half_w * math.cos(arc_ang)
-            # Smooth anatomical clavicle drop
-            drop_factor = math.sin(arc_ang) ** 1.3
-            z = z_hps - drop_factor * neck_front_drop
-            y = 0.012 + 0.038 * drop_factor
+            z = z_hps - slope_drop * (u_sh ** 1.15)
+            y = y_neck_mid + 0.046 + 0.022 * u_sh
+        else: # Front neck scoop - pure smooth cosine ease with zero slope at shoulders
+            k = i - 5
+            # k ranges from 1 to 5 (i = 6, 7, 8, 9, 10)
+            u_neck = k / 6.0
+            phi = u_neck * math.pi
+            x = neck_half_w * math.cos(phi)
+            # Smooth ease so derivative is tangent to shoulder line at endpoints
+            smooth_drop = 0.5 * (1.0 - math.cos(phi))
+            z = z_hps - neck_front_drop * smooth_drop
+            y = y_neck_mid + 0.046 * (1.0 - smooth_drop) + 0.074 * math.sin(phi)
         top_target_coords[i] = (x, y, z)
 
     for i in range(18, 31):
-        if i <= 21:
+        if i <= 21: # Left shoulder back
             u_sh = (21 - i) / 3.0
             x = -(neck_half_w + (shoulder_half_w - neck_half_w) * u_sh)
-            z = z_hps - slope_drop * (0.35 * u_sh + 0.65 * (u_sh ** 1.2))
-            y = -0.012 * (1.0 - u_sh)
-        elif i >= 27:
+            z = z_hps - slope_drop * (u_sh ** 1.15)
+            y = y_neck_mid - (0.044 + 0.020 * u_sh)
+        elif i >= 27: # Right shoulder back
             u_sh = (i - 27) / 3.0
             x = neck_half_w + (shoulder_half_w - neck_half_w) * u_sh
-            z = z_hps - slope_drop * (0.35 * u_sh + 0.65 * (u_sh ** 1.2))
-            y = -0.012 * (1.0 - u_sh)
-        else:
-            # High back nape curve
-            u_n = (i - 21) / 6.0
-            arc_ang = math.pi * u_n
-            x = -neck_half_w * math.cos(arc_ang)
-            drop_factor = math.sin(arc_ang) ** 1.2
-            z = z_hps - drop_factor * neck_back_drop
-            y = -0.014 - 0.024 * drop_factor
+            z = z_hps - slope_drop * (u_sh ** 1.15)
+            y = y_neck_mid - (0.044 + 0.020 * u_sh)
+        else: # Back neck scoop - smooth tangent ease
+            k = i - 21
+            u_neck = k / 6.0
+            phi = u_neck * math.pi
+            x = -neck_half_w * math.cos(phi)
+            smooth_drop = 0.5 * (1.0 - math.cos(phi))
+            z = z_hps - neck_back_drop * smooth_drop
+            y = y_neck_mid - (0.044 * (1.0 - smooth_drop) + 0.050 * math.sin(phi))
         top_target_coords[i] = (x, y, z)
 
-    # Loft top rings to shoulder seam
-    base_top_ring = torso_rings[-1]
-    for r in range(1, N_RINGS_TOP + 1):
-        t_top = r / float(N_RINGS_TOP)
-        t_ease = 0.5 * (1.0 - math.cos(math.pi * t_top))
+    mid_top_ring = torso_rings[-1]
+    for r_sh in range(1, N_RINGS_SHOULDER + 1):
+        t_sh = r_sh / float(N_RINGS_SHOULDER)
+        t_ease = 0.5 * (1.0 - math.cos(math.pi * t_sh))
         ring = [None] * N_COLS
-
-        for i in list(range(2, 15)) + list(range(18, 31)):
-            bx, by, bz = base_top_ring[i].co.x, base_top_ring[i].co.y, base_top_ring[i].co.z
-            tx, ty, tz = top_target_coords[i]
-            x = bx * (1.0 - t_ease) + tx * t_ease
-            y = by * (1.0 - t_ease) + ty * t_ease
-            z = bz * (1.0 - t_ease) + tz * t_ease
-            ring[i] = bm.verts.new((x, y, z))
+        for i in range(N_COLS):
+            if top_target_coords[i] is not None:
+                v_mid = mid_top_ring[i]
+                tx, ty, tz = top_target_coords[i]
+                x_interp = v_mid.co.x * (1.0 - t_ease) + tx * t_ease
+                y_interp = v_mid.co.y * (1.0 - t_ease) + ty * t_ease
+                z_interp = v_mid.co.z * (1.0 - t_ease) + tz * t_ease
+                v = bm.verts.new((x_interp, y_interp, z_interp))
+                ring[i] = v
+                vg_torso.add(v)
+                if i < 16:
+                    vg_front.add(v)
+                else:
+                    vg_back.add(v)
+                if i in [2, 3, 4, 5, 27, 28, 29, 30]:
+                    vg_right_sh.add(v)
+                elif i in [11, 12, 13, 14, 18, 19, 20, 21]:
+                    vg_left_sh.add(v)
         torso_rings.append(ring)
 
-    # Stitch upper chest panels
-    top_start_r = mid_start_r + N_RINGS_MID
-    for r in range(top_start_r, top_start_r + N_RINGS_TOP):
-        r1 = torso_rings[r]
-        r2 = torso_rings[r + 1]
-
+    sh_start_r = mid_start_r + N_RINGS_CHEST
+    for r_idx in range(sh_start_r, sh_start_r + N_RINGS_SHOULDER):
+        r1 = torso_rings[r_idx]
+        r2 = torso_rings[r_idx + 1]
         for i in range(2, 14):
-            face = bm.faces.new([r1[i], r1[i + 1], r2[i + 1], r2[i]])
-            face.material_index = 0
-            for loop in face.loops:
+            f = bm.faces.new([r1[i], r1[i + 1], r2[i + 1], r2[i]])
+            for loop in f.loops:
                 vx, vy, vz = loop.vert.co.x, loop.vert.co.y, loop.vert.co.z
-                v_coord = max(0.01, min(0.99, 0.08 + (vz / z_hps) * 0.82))
-                u_coord = 0.265 - (vx / (2.2 * a_chest)) * 0.38
-                loop[uv_layer].uv = Vector((max(0.01, min(0.99, u_coord)), v_coord))
-
+                loop[uv_layer].uv = Vector((0.25 - (vx / (2.2 * a_chest)) * 0.35, max(0.01, min(0.99, 0.08 + (vz / z_hps) * 0.82))))
         for i in range(18, 30):
-            face = bm.faces.new([r1[i], r1[i + 1], r2[i + 1], r2[i]])
-            face.material_index = 0
-            for loop in face.loops:
+            f = bm.faces.new([r1[i], r1[i + 1], r2[i + 1], r2[i]])
+            for loop in f.loops:
                 vx, vy, vz = loop.vert.co.x, loop.vert.co.y, loop.vert.co.z
-                v_coord = max(0.01, min(0.99, 0.08 + (vz / z_hps) * 0.82))
-                u_coord = 0.735 + (vx / (2.2 * a_chest)) * 0.38
-                loop[uv_layer].uv = Vector((max(0.01, min(0.99, u_coord)), v_coord))
+                loop[uv_layer].uv = Vector((0.75 + (vx / (2.2 * a_chest)) * 0.35, max(0.01, min(0.99, 0.08 + (vz / z_hps) * 0.82))))
 
-    # Stitch left and right shoulder seams
-    top_ring = torso_rings[-1]
+    # 4. SHOULDER SEAMS
+    top_r = torso_rings[-1]
     for k in range(3):
-        f1 = top_ring[2 + k]
-        f2 = top_ring[3 + k]
-        b1 = top_ring[30 - k]
-        b2 = top_ring[29 - k]
+        f1 = top_r[2 + k]
+        f2 = top_r[3 + k]
+        b1 = top_r[30 - k]
+        b2 = top_r[29 - k]
         face = bm.faces.new([f1, f2, b2, b1])
-        face.material_index = 0
+        vg_right_sh.update([f1, f2, b2, b1])
         for loop in face.loops:
             vx, vy, vz = loop.vert.co.x, loop.vert.co.y, loop.vert.co.z
-            v_coord = max(0.01, min(0.99, 0.08 + (vz / z_hps) * 0.82))
-            u_coord = 0.265 - (vx / (2.2 * a_chest)) * 0.38 if vy >= 0 else 0.735 + (vx / (2.2 * a_chest)) * 0.38
-            loop[uv_layer].uv = Vector((max(0.01, min(0.99, u_coord)), v_coord))
+            loop[uv_layer].uv = Vector((0.25 - (vx / (2.2 * a_chest)) * 0.35 if vy >= 0 else 0.75 + (vx / (2.2 * a_chest)) * 0.35, max(0.01, min(0.99, 0.08 + (vz / z_hps) * 0.82))))
 
     for k in range(3):
-        f1 = top_ring[11 + k]
-        f2 = top_ring[12 + k]
-        b1 = top_ring[21 - k]
-        b2 = top_ring[20 - k]
+        f1 = top_r[11 + k]
+        f2 = top_r[12 + k]
+        b1 = top_r[21 - k]
+        b2 = top_r[20 - k]
         face = bm.faces.new([f1, f2, b2, b1])
-        face.material_index = 0
+        vg_left_sh.update([f1, f2, b2, b1])
         for loop in face.loops:
             vx, vy, vz = loop.vert.co.x, loop.vert.co.y, loop.vert.co.z
-            v_coord = max(0.01, min(0.99, 0.08 + (vz / z_hps) * 0.82))
-            u_coord = 0.265 - (vx / (2.2 * a_chest)) * 0.38 if vy >= 0 else 0.735 + (vx / (2.2 * a_chest)) * 0.38
-            loop[uv_layer].uv = Vector((max(0.01, min(0.99, u_coord)), v_coord))
+            loop[uv_layer].uv = Vector((0.25 - (vx / (2.2 * a_chest)) * 0.35 if vy >= 0 else 0.75 + (vx / (2.2 * a_chest)) * 0.35, max(0.01, min(0.99, 0.08 + (vz / z_hps) * 0.82))))
 
-    # 4. HOLLOW ROUND NECKLINE & DUAL-LAYER ROLLED 1x1 RIB COLLAR BAND (Pacdora Standard)
-    # The neckline is 100% open aperture with a forward anatomical tilt of ~11 degrees.
-    neck_boundary = [top_ring[i] for i in range(5, 12)] + [top_ring[i] for i in range(21, 28)]
-    N_neck = len(neck_boundary)
+    # 5. HIGH-DEFINITION RIBBED CREW NECKBAND (With Constant-Tangent Collar Rise)
+    neck_loop = [
+        top_r[5], top_r[6], top_r[7], top_r[8], top_r[9], top_r[10], top_r[11],
+        top_r[21], top_r[22], top_r[23], top_r[24], top_r[25], top_r[26], top_r[27]
+    ]
+    N_neck = len(neck_loop)
 
-    collar_rise = 0.018  # 1.8 cm ribbed collar height
-    cloth_t = 0.0022     # 2.2 mm double-layer cloth thickness
-    neck_center_y = 0.006
+    collar_inward = 0.010
+    cloth_t = 0.0026
+    neck_cy = 0.008
 
     c_outer = []
     c_rim = []
     c_inner = []
 
-    for i, vn in enumerate(neck_boundary):
-        dy = vn.co.y - neck_center_y
+    for idx, vn in enumerate(neck_loop):
+        dy = vn.co.y - neck_cy
         r_rel = math.hypot(vn.co.x, dy)
         ux = vn.co.x / r_rel if r_rel > 1e-4 else 0.0
         uy = dy / r_rel if r_rel > 1e-4 else 0.0
 
-        # Outer collar surface rising and angling slightly inward
-        ox = vn.co.x - ux * 0.004
-        oy = vn.co.y - uy * 0.004
-        oz = vn.co.z + collar_rise
-        v_out = bm.verts.new((ox, oy, oz))
-        c_outer.append(v_out)
+        # Uniform smooth collar rise avoiding shoulder peaks
+        c_rise = 0.014
+        vo = bm.verts.new((vn.co.x - ux * collar_inward, vn.co.y - uy * collar_inward, vn.co.z + c_rise))
+        c_outer.append(vo)
 
-        # Rolled top rim with physical thickness
-        rx = ox - ux * cloth_t
-        ry = oy - uy * cloth_t
-        rz = oz + 0.0012
-        v_rim = bm.verts.new((rx, ry, rz))
-        c_rim.append(v_rim)
+        vr = bm.verts.new((vo.co.x - ux * cloth_t, vo.co.y - uy * cloth_t, vo.co.z - 0.0008))
+        c_rim.append(vr)
 
-        # Inner underside shell descending into the shirt interior
-        ix = rx - ux * 0.002
-        iy = ry - uy * 0.002
-        iz = vn.co.z - 0.008
-        v_in = bm.verts.new((ix, iy, iz))
-        c_inner.append(v_in)
+        vi = bm.verts.new((vn.co.x - ux * (collar_inward * 0.75 + cloth_t), vn.co.y - uy * (collar_inward * 0.75 + cloth_t), vn.co.z - 0.010))
+        c_inner.append(vi)
+        vg_neckline.update([vo, vr, vi])
 
-    # Stitch collar ribband quads
     for i in range(N_neck):
         i_next = (i + 1) % N_neck
-        u0 = 0.05 + 0.90 * (i / float(N_neck))
-        u1 = 0.05 + 0.90 * ((i + 1) / float(N_neck))
-
-        # Face 1: Outer visible ribbed band
-        f_out = bm.faces.new([neck_boundary[i], neck_boundary[i_next], c_outer[i_next], c_outer[i]])
-        f_out.material_index = 0
-        for loop, uv in zip(f_out.loops, [Vector((u0, 0.93)), Vector((u1, 0.93)), Vector((u1, 0.965)), Vector((u0, 0.965))]):
-            loop[uv_layer].uv = uv
-
-        # Face 2: Rolled rim edge
+        f_out = bm.faces.new([neck_loop[i], neck_loop[i_next], c_outer[i_next], c_outer[i]])
         f_rim = bm.faces.new([c_outer[i], c_outer[i_next], c_rim[i_next], c_rim[i]])
-        f_rim.material_index = 0
-        for loop, uv in zip(f_rim.loops, [Vector((u0, 0.965)), Vector((u1, 0.965)), Vector((u1, 0.98)), Vector((u0, 0.98))]):
-            loop[uv_layer].uv = uv
-
-        # Face 3: Inner underside collar
         f_in = bm.faces.new([c_rim[i], c_rim[i_next], c_inner[i_next], c_inner[i]])
-        f_in.material_index = 0
-        for loop, uv in zip(f_in.loops, [Vector((u0, 0.98)), Vector((u1, 0.98)), Vector((u1, 0.95)), Vector((u0, 0.95))]):
+
+        u0 = i / float(N_neck)
+        u1 = (i + 1) / float(N_neck)
+        for loop, uv in zip(f_out.loops, [Vector((u0, 0.93)), Vector((u1, 0.93)), Vector((u1, 0.96)), Vector((u0, 0.96))]):
+            loop[uv_layer].uv = uv
+        for loop, uv in zip(f_rim.loops, [Vector((u0, 0.96)), Vector((u1, 0.96)), Vector((u1, 0.975)), Vector((u0, 0.975))]):
+            loop[uv_layer].uv = uv
+        for loop, uv in zip(f_in.loops, [Vector((u0, 0.975)), Vector((u1, 0.975)), Vector((u1, 0.94)), Vector((u0, 0.94))]):
             loop[uv_layer].uv = uv
 
-    # 5. SET-IN SLEEVES (28-Degree Resting Pitch with Folded Hem)
-    def build_sleeve(is_right: bool):
-        s_sign = 1.0 if is_right else -1.0
-        pitch_rad = math.radians(28.0)
-        N_SL_RINGS = 6
-        N_SL_SECTS = 16
+    # 6. SEAMLESS SET-IN SLEEVES (Pacdora Natural A-pose Drape: 45° down, 14° forward)
+    TOTAL_RINGS = len(torso_rings)
 
-        sl_r = armhole_depth * 0.48
-        cuff_r = sl_r * 0.88
+    def attach_seamless_sleeve(is_left=True):
+        vg_target = vg_left_sl if is_left else vg_right_sl
+        side_sign = -1.0 if is_left else 1.0
 
-        # Armscye center
-        scye_cx = s_sign * (shoulder_half_w - 0.015)
-        scye_cy = 0.002
-        scye_cz = z_underarm + armhole_depth * 0.50
+        ah_loop = []
+        if is_left:
+            ah_loop.append(torso_rings[N_RINGS_LOWER][15])
+            ah_loop.append(torso_rings[N_RINGS_LOWER][16])
+            ah_loop.append(torso_rings[N_RINGS_LOWER][17])
+            for r in range(N_RINGS_LOWER, TOTAL_RINGS):
+                ah_loop.append(torso_rings[r][18])
+            for r in range(TOTAL_RINGS - 1, N_RINGS_LOWER - 1, -1):
+                ah_loop.append(torso_rings[r][14])
+        else:
+            ah_loop.append(torso_rings[N_RINGS_LOWER][31])
+            ah_loop.append(torso_rings[N_RINGS_LOWER][0])
+            ah_loop.append(torso_rings[N_RINGS_LOWER][1])
+            for r in range(N_RINGS_LOWER, TOTAL_RINGS):
+                ah_loop.append(torso_rings[r][2])
+            for r in range(TOTAL_RINGS - 1, N_RINGS_LOWER - 1, -1):
+                ah_loop.append(torso_rings[r][30])
 
-        sleeve_rings = []
-        for r in range(N_SL_RINGS + 1):
-            t = r / float(N_SL_RINGS)
-            cur_r = sl_r * (1.0 - t) + cuff_r * t
+        N_ah = len(ah_loop)
+        c0 = Vector((
+            sum(v.co.x for v in ah_loop) / float(N_ah),
+            sum(v.co.y for v in ah_loop) / float(N_ah),
+            sum(v.co.z for v in ah_loop) / float(N_ah)
+        ))
 
-            dist = t * sleeve_m
-            cx = scye_cx + s_sign * dist * math.cos(pitch_rad)
-            cy = scye_cy - 0.006 * math.sin(math.pi * t)
-            cz = scye_cz - dist * math.sin(pitch_rad)
+        drape_angle = math.radians(45.0)
+        pitch_angle = math.radians(14.0)
 
-            ring = []
-            for k in range(N_SL_SECTS):
-                th = 2.0 * math.pi * k / float(N_SL_SECTS)
-                # Local circular cross-section tilted along sleeve axis
-                lx = 0.0
-                ly = cur_r * math.sin(th)
-                lz = cur_r * math.cos(th)
+        d_vec = Vector((
+            side_sign * math.cos(drape_angle) * math.cos(pitch_angle),
+            math.sin(pitch_angle),
+            -math.sin(drape_angle) * math.cos(pitch_angle)
+        )).normalized()
 
-                # Rotate by pitch angle
-                rx = s_sign * lz * math.sin(pitch_rad)
-                rz = lz * math.cos(pitch_rad)
+        u_vec = (Vector((0, 1, 0)) - Vector((0, 1, 0)).dot(d_vec) * d_vec).normalized()
+        v_vec = d_vec.cross(u_vec).normalized()
 
-                v = bm.verts.new((cx + rx, cy + ly, cz + rz))
-                ring.append(v)
-            sleeve_rings.append(ring)
+        proj_angles = []
+        for v in ah_loop:
+            rel = v.co - c0
+            u_val = rel.dot(u_vec)
+            v_val = rel.dot(v_vec)
+            proj_angles.append(math.atan2(v_val, u_val))
 
-        # Stitch sleeve quads
-        for r in range(N_SL_RINGS):
-            r1 = sleeve_rings[r]
-            r2 = sleeve_rings[r + 1]
-            for k in range(N_SL_SECTS):
-                k_next = (k + 1) % N_SL_SECTS
-                face = bm.faces.new([r1[k], r1[k_next], r2[k_next], r2[k]])
-                face.material_index = 0
-                u0 = 0.28 if is_right else 0.72
-                loop_uv = Vector((u0, 0.20 + 0.60 * (r / float(N_SL_RINGS))))
-                for loop in face.loops:
-                    loop[uv_layer].uv = loop_uv
+        N_SLEEVE_RINGS = 8
+        prev_ring = ah_loop
+        for k in range(1, N_SLEEVE_RINGS + 1):
+            t = k / float(N_SLEEVE_RINGS)
+            t_morph = 0.5 * (1.0 - math.cos(math.pi * t))
+            c_k = c0 + d_vec * (sleeve_len * t)
 
-    build_sleeve(is_right=True)
-    build_sleeve(is_right=False)
+            flare = 0.008 * math.sin(math.pi * t)
+            c_k.x += side_sign * flare * 0.25
+            c_k.z -= 0.003 * math.sin(math.pi * t)
 
-    return {
-        "chest": chest_m,
-        "shoulder": shoulder_m,
-        "length": length_m,
-        "sleeve": sleeve_m
-    }
+            rad_u = 0.092 * (1.0 - 0.12 * t)
+            rad_v = 0.096 * (1.0 - 0.14 * t)
 
+            cur_ring = []
+            for i in range(N_ah):
+                phi = proj_angles[i]
+                p_round = c_k + u_vec * (rad_u * math.cos(phi)) + v_vec * (rad_v * math.sin(phi))
+                p_linear = ah_loop[i].co + d_vec * (sleeve_len * t)
+                p_final = p_linear * (1.0 - t_morph) + p_round * t_morph
+                v_sl = bm.verts.new(p_final)
+                cur_ring.append(v_sl)
+                vg_target.add(v_sl)
 
-def build_crew_garment(config: dict, output_glb_path: str) -> dict:
-    """
-    Main entry point for generating a standalone, photorealistic Plain Crew-Neck T-Shirt.
-    Applies Solidify & Subdivision modifiers for Pacdora 3D quality.
-    """
-    if bpy is None:
-        raise RuntimeError("Blender bpy module is required to execute build_crew_garment.")
+            for i in range(N_ah):
+                i_next = (i + 1) % N_ah
+                f = bm.faces.new([prev_ring[i], prev_ring[i_next], cur_ring[i_next], cur_ring[i]])
+                u0 = (0.05 if is_left else 0.55) + 0.40 * (i / float(N_ah))
+                u1 = (0.05 if is_left else 0.55) + 0.40 * ((i + 1) / float(N_ah))
+                v0 = 0.60 - 0.45 * ((k - 1) / float(N_SLEEVE_RINGS))
+                v1 = 0.60 - 0.45 * (k / float(N_SLEEVE_RINGS))
+                for loop, uv in zip(f.loops, [Vector((u0, v0)), Vector((u1, v0)), Vector((u1, v1)), Vector((u0, v1))]):
+                    loop[uv_layer].uv = uv
 
-    bpy.ops.wm.read_factory_settings(use_empty=True)
+            prev_ring = cur_ring
 
-    measurements = config.get("measurements", {})
-    fit = config.get("fit", "regular")
+        # Sleeve Cuff Hem
+        cuff_rim = []
+        for v in prev_ring:
+            rel = v.co - c_k
+            v_rim = bm.verts.new(v.co - rel.normalized() * 0.0032 - d_vec * 0.004)
+            cuff_rim.append(v_rim)
+            vg_target.add(v_rim)
 
-    bm = bmesh.new()
-    uv_layer = bm.loops.layers.uv.new("UVMap")
+        for i in range(N_ah):
+            i_next = (i + 1) % N_ah
+            f_cuff = bm.faces.new([prev_ring[i], prev_ring[i_next], cuff_rim[i_next], cuff_rim[i]])
+            for loop in f_cuff.loops:
+                loop[uv_layer].uv = Vector((0.25, 0.15))
 
-    # Build pure crew-neck geometry
-    geom_info = build_crew_mesh(bm, uv_layer, measurements, fit=fit)
+    attach_seamless_sleeve(is_left=True)
+    attach_seamless_sleeve(is_left=False)
 
-    # Convert bmesh to Blender mesh object
-    mesh_data = bpy.data.meshes.new("CrewTShirtMesh")
     bm.to_mesh(mesh_data)
     bm.free()
 
-    obj = bpy.data.objects.new("PlainCrewTShirt", mesh_data)
-    bpy.context.collection.objects.link(obj)
-    bpy.context.view_layer.objects.active = obj
-    obj.select_set(True)
+    # Recalculate normals & enable silky smooth cloth shading across all polygons
+    bm_clean = bmesh.new()
+    bm_clean.from_mesh(mesh_data)
+    bmesh.ops.recalc_face_normals(bm_clean, faces=bm_clean.faces)
+    bm_clean.to_mesh(mesh_data)
+    bm_clean.free()
 
-    # 1. Apply Smooth Shading with sharp boundary preservation
-    if hasattr(mesh_data, "use_auto_smooth"):
-        bpy.ops.object.shade_smooth()
-        mesh_data.use_auto_smooth = True
-        mesh_data.auto_smooth_angle = math.radians(35.0)
-    elif hasattr(bpy.ops.object, "shade_auto_smooth"):
-        try:
-            bpy.ops.object.shade_auto_smooth(angle=math.radians(35.0))
-        except Exception:
-            bpy.ops.object.shade_smooth()
-    else:
-        bpy.ops.object.shade_smooth()
+    for poly in mesh_data.polygons:
+        poly.use_smooth = True
 
-    # 2. Add Solidify Modifier: gives realistic 1.4 mm fabric thickness (eliminates paper-thin edges)
-    solid_mod = obj.modifiers.new(name="ClothThickness", type='SOLIDIFY')
-    solid_mod.thickness = 0.0014  # 1.4 mm realistic cotton jersey thickness
-    solid_mod.offset = -1.0
-    solid_mod.use_rim = True
+    mesh_data.update()
 
-    # 3. Add Subdivision Surface Modifier (Level 1): gives smooth organic Pacdora curvature
-    subsurf_mod = obj.modifiers.new(name="ClothSmoothness", type='SUBSURF')
-    subsurf_mod.levels = 1
-    subsurf_mod.render_levels = 1
+    # Assign Vertex Groups
+    for vg_name in ["Torso", "FrontBody", "BackBody", "Hem", "LeftShoulder", "RightShoulder", "LeftSleeve", "RightSleeve", "Neckline"]:
+        if vg_name not in obj.vertex_groups:
+            obj.vertex_groups.new(name=vg_name)
 
-    # Apply modifiers before export so GLB contains physical thickness
-    bpy.ops.object.modifier_apply(modifier="ClothThickness")
-    bpy.ops.object.modifier_apply(modifier="ClothSmoothness")
+    vg_torso_grp = obj.vertex_groups["Torso"]
+    vg_front_grp = obj.vertex_groups["FrontBody"]
+    vg_back_grp = obj.vertex_groups["BackBody"]
+    vg_hem_grp = obj.vertex_groups["Hem"]
+    vg_l_sh_grp = obj.vertex_groups["LeftShoulder"]
+    vg_r_sh_grp = obj.vertex_groups["RightShoulder"]
+    vg_l_sl_grp = obj.vertex_groups["LeftSleeve"]
+    vg_r_sl_grp = obj.vertex_groups["RightSleeve"]
+    vg_neck_grp = obj.vertex_groups["Neckline"]
 
-    # 4. Material Setup: Single Jersey Combed Cotton PBR Shader
-    mat = bpy.data.materials.new(name="CottonSingleJerseyMat")
-    mat.use_nodes = True
-    nodes = mat.node_tree.nodes
-    links = mat.node_tree.links
-    bsdf = nodes.get("Principled BSDF")
+    for v in mesh_data.vertices:
+        x, y, z = v.co.x, v.co.y, v.co.z
+        if x < -shoulder_half_w * 0.96 and z < z_shoulder_tip + 0.02:
+            vg_l_sl_grp.add([v.index], 1.0, 'REPLACE')
+        elif x > shoulder_half_w * 0.96 and z < z_shoulder_tip + 0.02:
+            vg_r_sl_grp.add([v.index], 1.0, 'REPLACE')
+        else:
+            vg_torso_grp.add([v.index], 1.0, 'REPLACE')
+            if y >= 0:
+                vg_front_grp.add([v.index], 1.0, 'REPLACE')
+            else:
+                vg_back_grp.add([v.index], 1.0, 'REPLACE')
 
-    base_hex = config.get("base_color_hex", "#1C1C1E")
-    # Convert hex to linear RGB
-    clean_hex = base_hex.lstrip("#")
-    if len(clean_hex) == 6:
-        r = int(clean_hex[0:2], 16) / 255.0
-        g = int(clean_hex[2:4], 16) / 255.0
-        b = int(clean_hex[4:6], 16) / 255.0
-        bsdf.inputs['Base Color'].default_value = (r ** 2.2, g ** 2.2, b ** 2.2, 1.0)
+            if z <= 0.025:
+                vg_hem_grp.add([v.index], 1.0, 'REPLACE')
 
-    bsdf.inputs['Roughness'].default_value = 0.84  # Soft matte cotton
-    if 'Sheen Weight' in bsdf.inputs:
-        bsdf.inputs['Sheen Weight'].default_value = 0.40  # Soft fabric sheen
-    elif 'Sheen' in bsdf.inputs:
-        bsdf.inputs['Sheen'].default_value = 0.40
+            if z >= z_underarm * 1.05:
+                if x < -neck_half_w * 0.90:
+                    vg_l_sh_grp.add([v.index], 1.0, 'REPLACE')
+                elif x > neck_half_w * 0.90:
+                    vg_r_sh_grp.add([v.index], 1.0, 'REPLACE')
+                else:
+                    vg_neck_grp.add([v.index], 1.0, 'REPLACE')
 
-    obj.data.materials.append(mat)
+    if output_blend:
+        os.makedirs(os.path.dirname(os.path.abspath(output_blend)), exist_ok=True)
+        bpy.ops.wm.save_as_mainfile(filepath=output_blend)
+        print(f"MASTER_CREW_BLEND_SAVED: {output_blend}")
 
-    # 5. Export standalone binary GLB
-    os.makedirs(os.path.dirname(os.path.abspath(output_glb_path)), exist_ok=True)
-    bpy.ops.export_scene.gltf(
-        filepath=output_glb_path,
-        export_format='GLB',
-        use_selection=True,
-        export_materials='EXPORT',
-        export_normals=True,
-        export_yup=True
-    )
+    if output_glb:
+        os.makedirs(os.path.dirname(os.path.abspath(output_glb)), exist_ok=True)
+        bpy.ops.export_scene.gltf(
+            filepath=output_glb,
+            export_format='GLB',
+            use_selection=True,
+            export_apply=True,
+            export_materials='EXPORT',
+            export_normals=True
+        )
+        print(f"MASTER_CREW_GLB_SAVED: {output_glb}")
 
-    dims = obj.dimensions
-    return {
-        "status": "success",
-        "vertex_count": len(obj.data.vertices),
-        "face_count": len(obj.data.polygons),
-        "dimensions": {
-            "width_m": round(dims.x, 4),
-            "height_m": round(dims.z, 4),
-            "depth_m": round(dims.y, 4)
-        }
-    }
+    return obj

@@ -190,7 +190,8 @@ class ProductExtractionService:
                     # Infer missing specifications from product title, description, and URL
                     full_text = (extracted_info["title"] + " " + extracted_info["description"] + " " + url_lower).lower()
 
-                    if any(w in full_text for w in ["polo", "collar"]):
+                    polo_keywords = ["polo", "collar", "zip neck", "zipper neck", "zip-neck", "mandarin", "henley", "placket", "lapel", "3bros"]
+                    if any(w in full_text for w in polo_keywords):
                         extracted_info["specifications"]["Neck"] = "Polo Neck"
                         extracted_info["neck_type"] = "polo"
                         if "Fabric" not in extracted_info["specifications"]:
@@ -228,7 +229,7 @@ class ProductExtractionService:
         # If live scrape didn't find images (e.g., bot block), fall back gracefully
         if not extracted_info["gallery_images"]:
             # Check if title or URL implies polo or green or VeBNoR
-            is_polo_or_green = any(w in (url_lower + " " + extracted_info["title"].lower()) for w in ["polo", "green", "allen", "vebnor", "te5luhuuun"])
+            is_polo_or_green = any(w in (url_lower + " " + extracted_info["title"].lower()) for w in ["polo", "collar", "zip", "3bros", "green", "allen", "vebnor", "te5luhuuun"])
             fallback_sample_id = "fk_allen_solly_polo_green" if is_polo_or_green else "fk_graphic_crew_black"
             fallback = cls.load_sample(fallback_sample_id)
             if fallback:

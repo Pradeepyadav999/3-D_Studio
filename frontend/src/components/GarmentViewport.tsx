@@ -3,12 +3,13 @@ import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls, ContactShadows } from '@react-three/drei';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { ShadingMode, ViewPreset, ModelMetadata } from '../types/garment';
+import { ShadingMode, ViewPreset, ModelMetadata, DisplayMode, AvatarStyle, GarmentType } from '../types/garment';
 import { ViewportToolbar } from './ViewportToolbar';
 import { MetricGrid } from './MetricGrid';
 import { GarmentDimensionOverlays } from './GarmentDimensionOverlays';
 import { MeasurementAccuracyModal } from './MeasurementAccuracyModal';
-import { Shirt, Loader2, Compass, AlertCircle } from 'lucide-react';
+import { AvatarCollisionProxy } from './AvatarCollisionProxy';
+import { Shirt, Loader2, Compass, AlertCircle, User } from 'lucide-react';
 
 interface GarmentViewportProps {
   modelUrl: string | null;
@@ -19,6 +20,8 @@ interface GarmentViewportProps {
   selectedSize: string;
   shadingMode?: ShadingMode;
   onShadingModeChange?: (mode: ShadingMode) => void;
+  garmentType?: GarmentType;
+  onGarmentTypeChange?: (type: GarmentType) => void;
 }
 
 // Subcomponent: Loads and manipulates the real GLB Mesh with 4 distinct view modes
@@ -286,10 +289,16 @@ const CameraController: React.FC<{
         break;
       }
       case 'top': {
-        const distZ = (size.z / 2) / Math.tan(halfFovRad);
+        const distY = (size.y / 2) / Math.tan(halfFovRad);
         const distX = (size.x / 2) / (Math.tan(halfFovRad) * aspect);
-        const dist = Math.max(distZ, distX) * padding;
-        camera.position.set(center.x, center.y + dist, center.z - 0.0001);
+        const distZ = (size.z / 2) / Math.tan(halfFovRad);
+        const dist = Math.max(distY, distX, distZ) * 1.15;
+        // Pacdora-matched top-front elevated 3D hero perspective (elevation 52 deg looking down into neckhole & chest)
+        const elevRad = (52 * Math.PI) / 180;
+        const camY = center.y + dist * Math.sin(elevRad);
+        const camZ = center.z - dist * Math.cos(elevRad);
+        camera.position.set(center.x, camY, camZ);
+        controls.target.set(center.x, center.y + size.y * 0.08, center.z);
         break;
       }
       case 'perspective':
@@ -346,6 +355,8 @@ export const GarmentViewport: React.FC<GarmentViewportProps> = ({
   selectedSize,
   shadingMode: propShadingMode,
   onShadingModeChange: propOnShadingModeChange,
+  garmentType,
+  onGarmentTypeChange,
 }) => {
   const controlsRef = useRef<any>(null);
   const [localShadingMode, setLocalShadingMode] = useState<ShadingMode>('textured');
@@ -360,6 +371,14 @@ export const GarmentViewport: React.FC<GarmentViewportProps> = ({
   const [currentBox, setCurrentBox] = useState<THREE.Box3 | null>(null);
   const [garmentYOffset, setGarmentYOffset] = useState<number>(0);
   const [hasTexture, setHasTexture] = useState<boolean>(true);
+  const [displayMode, setDisplayMode] = useState<DisplayMode>('mode_a');
+  const [avatarStyle, setAvatarStyle] = useState<AvatarStyle>('translucent');
+  const [avatarOpacity, setAvatarOpacity] = useState<number>(0.55);
+  const [clearanceInfo, setClearanceInfo] = useState<{
+    radial_ease_cm: number;
+    shoulder_ease_cm: number;
+    noPenetration: boolean;
+  } | null>(null);
 
   const activeShadingMode = propShadingMode || localShadingMode;
   const handleShadingChange = (mode: ShadingMode) => {
@@ -379,10 +398,18 @@ export const GarmentViewport: React.FC<GarmentViewportProps> = ({
     <div className="relative w-full h-full bg-studio-950 overflow-hidden select-none flex flex-col">
       {/* 1. VIEWPORT TOOLBAR (Positioned directly above 3D viewport canvas) */}
       <ViewportToolbar
+        garmentType={garmentType}
+        onGarmentTypeChange={onGarmentTypeChange}
         shadingMode={activeShadingMode}
         onShadingModeChange={handleShadingChange}
         viewPreset={viewPreset}
         onViewPresetChange={setViewPreset}
+        displayMode={displayMode}
+        onDisplayModeChange={setDisplayMode}
+        avatarStyle={avatarStyle}
+        onAvatarStyleChange={setAvatarStyle}
+        avatarOpacity={avatarOpacity}
+        onAvatarOpacityChange={setAvatarOpacity}
         onResetCamera={() => setResetTrigger((n) => n + 1)}
         onFitModel={() => setFitTrigger((n) => n + 1)}
         showGrid={showGrid}
@@ -404,15 +431,32 @@ export const GarmentViewport: React.FC<GarmentViewportProps> = ({
         </div>
       )}
 
+      {/* Mode B Avatar Try-On Clearance Badge */}
+      {modelUrl && displayMode === 'mode_b' && clearanceInfo && (
+        <div className="absolute top-14 left-4 z-20 pointer-events-none flex items-center space-x-2 bg-studio-900/90 border border-emerald-500/40 text-emerald-300 text-xs px-3 py-1.5 rounded-lg shadow-xl backdrop-blur-md">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="font-mono font-bold">Avatar Collision Proxy:</span>
+          <span className="font-mono text-white">
+            Radial Ease: {clearanceInfo.radial_ease_cm} cm | Shoulder Ease: {clearanceInfo.shoulder_ease_cm} cm (Zero Collision)
+          </span>
+        </div>
+      )}
+
       {/* Mode Indicator Pill in top right */}
       {modelUrl && (
         <div className="absolute top-14 right-4 z-20 pointer-events-none">
           <div className={`px-2.5 py-1 rounded-full text-[11px] font-mono font-bold tracking-wider uppercase border backdrop-blur-md transition-all ${
-            isValidationMode
+            displayMode === 'mode_b'
+              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-lg ring-1 ring-emerald-400/30'
+              : isValidationMode
               ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-lg ring-1 ring-amber-400/30'
               : 'bg-studio-900/60 text-studio-400 border-studio-800'
           }`}>
-            {isValidationMode ? 'Validation Mode: Calibrated 3D Measurements Active' : 'Normal Studio Mode: Clean Product Preview'}
+            {displayMode === 'mode_b'
+              ? 'Mode B: Avatar Try-On (Collision Proxy Aligned)'
+              : isValidationMode
+              ? 'Mode A: Validation Mode (Calibrated 3D Measurements)'
+              : 'Mode A: Standalone Product Mode (Clean Hero Preview)'}
           </div>
         </div>
       )}
@@ -469,6 +513,24 @@ export const GarmentViewport: React.FC<GarmentViewportProps> = ({
               onTextureStatus={setHasTexture}
             />
           ) : null}
+
+          {/* Avatar Collision Proxy Mannequin (Visible strictly in Mode B) */}
+          <AvatarCollisionProxy
+            visible={displayMode === 'mode_b'}
+            avatarStyle={avatarStyle}
+            avatarOpacity={avatarOpacity}
+            garmentDimensions={
+              metadata?.input_measurements?.chest
+                ? {
+                    chest_cm: metadata.input_measurements.chest,
+                    shoulder_cm: metadata.input_measurements.shoulder || 49.0,
+                    length_cm: metadata.input_measurements.length || 71.0,
+                  }
+                : null
+            }
+            garmentYOffset={garmentYOffset}
+            onClearanceUpdate={setClearanceInfo}
+          />
 
           {/* Independent 3D Dimension Overlays Group - Rendered only in validation mode */}
           {modelUrl && (

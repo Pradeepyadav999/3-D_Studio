@@ -19,7 +19,7 @@ export const SizeSelector: React.FC<SizeSelectorProps> = ({
   generatedSizes = [],
   isGenerating = false,
 }) => {
-  const standardSizes = ['S', 'M', 'L', 'XL', 'XXL'];
+  const standardSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL'];
   const displaySizes = standardSizes.filter((s) => sizes.includes(s));
   const effectiveSizes = displaySizes.length > 0 ? displaySizes : sizes;
 
@@ -40,8 +40,8 @@ export const SizeSelector: React.FC<SizeSelectorProps> = ({
         </span>
       </div>
 
-      {/* S | M | L | XL | XXL Button Grid */}
-      <div className="grid grid-cols-5 gap-1.5 bg-studio-950 p-1 rounded-lg border border-studio-800">
+      {/* XS | S | M | L | XL | XXL | 3XL | 4XL Button Grid */}
+      <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5 bg-studio-950 p-1 rounded-lg border border-studio-800">
         {effectiveSizes.map((sz) => {
           const isSelected = sz === selectedSize;
           const isGenerated = generatedSizes.includes(sz);

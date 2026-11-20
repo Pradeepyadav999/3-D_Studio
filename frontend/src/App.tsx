@@ -18,6 +18,7 @@ export const App: React.FC = () => {
   const [sampleProducts, setSampleProducts] = useState<SampleProductSummary[]>([]);
   const [currentProduct, setCurrentProduct] = useState<ProductDetails | null>(null);
   const [garmentType, setGarmentType] = useState<GarmentType>('basic_crew');
+  const [isGarmentTypeManual, setIsGarmentTypeManual] = useState<boolean>(false);
   const [fit, setFit] = useState<string>('regular');
 
   // Direct Size Chart Parameters (Flipkart Standard: Chest, Shoulder, Length, Sleeve)
@@ -43,6 +44,34 @@ export const App: React.FC = () => {
 
   // Cache: `${productId}_${measSig}` -> { modelUrl, textureUrl, metadata }
   const [modelCache, setModelCache] = useState<Record<string, { modelUrl: string; textureUrl: string | null; metadata: ModelMetadata }>>({});
+
+  // Helper: Detect Garment Type with robust keyword & vision fallback
+  const detectGarmentType = (prod: any): GarmentType => {
+    const titleLower = (prod?.title || '').toLowerCase();
+    const neckSpec = (prod?.specifications?.Neck || '').toLowerCase();
+    const visionNeck = (prod?.vision_analysis?.neckline_type || '').toLowerCase();
+
+    if (
+      visionNeck === 'polo' ||
+      neckSpec.includes('polo') ||
+      titleLower.includes('polo') ||
+      titleLower.includes('zip') ||
+      titleLower.includes('collar') ||
+      titleLower.includes('mandarin') ||
+      titleLower.includes('3bros')
+    ) {
+      return 'polo';
+    }
+    return 'basic_crew';
+  };
+
+  const handleGarmentTypeChange = (newType: GarmentType) => {
+    setGarmentType(newType);
+    setIsGarmentTypeManual(true);
+    if (currentProduct) {
+      trigger3DGeneration(currentProduct.product_id, measurements, unit, newType);
+    }
+  };
 
   // 1. Initial Load: Fetch sample products catalog
   useEffect(() => {
@@ -70,14 +99,13 @@ export const App: React.FC = () => {
       setCurrentProduct(prod);
       setCurrentStep(2);
 
-      // Auto-detect garment type from product, while allowing user override
-      if (prod.vision_analysis?.neckline_type === 'polo' || prod.specifications?.Neck === 'Polo Neck') {
-        setGarmentType('polo');
-      } else {
-        setGarmentType('basic_crew');
+      const autoType = detectGarmentType(prod);
+      const chosenType = isGarmentTypeManual ? garmentType : autoType;
+      if (!isGarmentTypeManual) {
+        setGarmentType(autoType);
       }
 
-      const measSig = `${measurements.chest}_${measurements.shoulder}_${measurements.length}_${measurements.sleeve}_${unit}`;
+      const measSig = `${measurements.chest}_${measurements.shoulder}_${measurements.length}_${measurements.sleeve}_${unit}_${chosenType}`;
       const cacheKey = `${sampleId}_${measSig}`;
       if (modelCache[cacheKey]) {
         const cached = modelCache[cacheKey];
@@ -86,7 +114,7 @@ export const App: React.FC = () => {
         setModelMetadata(cached.metadata);
         setCurrentStep(4);
       } else {
-        trigger3DGeneration(prod.product_id, measurements, unit);
+        trigger3DGeneration(prod.product_id, measurements, unit, chosenType);
       }
     } catch (err: any) {
       setGenerationError(err.message || 'Failed to analyze sample product');
@@ -104,13 +132,13 @@ export const App: React.FC = () => {
       setCurrentProduct(prod);
       setCurrentStep(2);
 
-      if (prod.vision_analysis?.neckline_type === 'polo' || prod.specifications?.Neck === 'Polo Neck') {
-        setGarmentType('polo');
-      } else {
-        setGarmentType('basic_crew');
+      const autoType = detectGarmentType(prod);
+      const chosenType = isGarmentTypeManual ? garmentType : autoType;
+      if (!isGarmentTypeManual) {
+        setGarmentType(autoType);
       }
 
-      trigger3DGeneration(prod.product_id, measurements, unit);
+      trigger3DGeneration(prod.product_id, measurements, unit, chosenType);
     } catch (err: any) {
       setGenerationError(err.message || 'Failed to analyze Flipkart product URL');
     } finally {
@@ -135,13 +163,13 @@ export const App: React.FC = () => {
       setCurrentProduct(prod);
       setCurrentStep(2);
 
-      if (prod.vision_analysis?.neckline_type === 'polo' || prod.specifications?.Neck === 'Polo Neck') {
-        setGarmentType('polo');
-      } else {
-        setGarmentType('basic_crew');
+      const autoType = detectGarmentType(prod);
+      const chosenType = isGarmentTypeManual ? garmentType : autoType;
+      if (!isGarmentTypeManual) {
+        setGarmentType(autoType);
       }
 
-      trigger3DGeneration(prod.product_id, measurements, unit);
+      trigger3DGeneration(prod.product_id, measurements, unit, chosenType);
     } catch (err: any) {
       setGenerationError(err.message || 'Failed to analyze uploaded images');
     } finally {
@@ -153,7 +181,8 @@ export const App: React.FC = () => {
   const trigger3DGeneration = async (
     productId: string,
     customMeasurements?: MeasurementValues,
-    customUnit?: string
+    customUnit?: string,
+    overrideGarmentType?: GarmentType
   ) => {
     setIsGenerating(true);
     setGenerationProgress(15);
@@ -162,11 +191,12 @@ export const App: React.FC = () => {
 
     const activeMeas = customMeasurements || measurements;
     const activeUnit = customUnit || unit;
+    const activeGarmentType = overrideGarmentType || garmentType;
 
     try {
       const job = await api.generate3DFromProduct({
         product_id: productId,
-        garment_type: garmentType,
+        garment_type: activeGarmentType,
         selected_size: 'custom',
         fit: fit,
         include_texture: true,
@@ -272,7 +302,7 @@ export const App: React.FC = () => {
         <div className="w-84 md:w-96 h-full flex-shrink-0">
           <ProductInputPanel
             garmentType={garmentType}
-            onGarmentTypeChange={setGarmentType}
+            onGarmentTypeChange={handleGarmentTypeChange}
             onAnalyzeUrl={handleAnalyzeUrl}
             onSelectSample={handleSelectSample}
             onUploadCustomImages={handleUploadCustomImages}
@@ -303,6 +333,8 @@ export const App: React.FC = () => {
             selectedSize={`${measurements.chest} ${unit}`}
             shadingMode={shadingMode as ShadingMode}
             onShadingModeChange={(mode) => setShadingMode(mode)}
+            garmentType={garmentType}
+            onGarmentTypeChange={handleGarmentTypeChange}
           />
         </div>
 

@@ -1,14 +1,22 @@
 import React from 'react';
 import { 
-  RotateCcw, Maximize, Grid, Box, Compass, Sparkles, Layers, Eye, Ruler, ShieldCheck
+  RotateCcw, Maximize, Grid, Box, Compass, Sparkles, Layers, Eye, Ruler, ShieldCheck, User, Shirt, Sliders
 } from 'lucide-react';
-import { ShadingMode, ViewPreset } from '../types/garment';
+import { ShadingMode, ViewPreset, DisplayMode, AvatarStyle, GarmentType } from '../types/garment';
 
 interface ViewportToolbarProps {
+  garmentType?: GarmentType;
+  onGarmentTypeChange?: (type: GarmentType) => void;
   shadingMode: ShadingMode;
   onShadingModeChange: (mode: ShadingMode) => void;
   viewPreset: ViewPreset;
   onViewPresetChange: (view: ViewPreset) => void;
+  displayMode: DisplayMode;
+  onDisplayModeChange: (mode: DisplayMode) => void;
+  avatarStyle: AvatarStyle;
+  onAvatarStyleChange: (style: AvatarStyle) => void;
+  avatarOpacity: number;
+  onAvatarOpacityChange: (val: number) => void;
   onResetCamera: () => void;
   onFitModel: () => void;
   showGrid: boolean;
@@ -23,10 +31,18 @@ interface ViewportToolbarProps {
 }
 
 export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
+  garmentType = 'basic_crew',
+  onGarmentTypeChange,
   shadingMode,
   onShadingModeChange,
   viewPreset,
   onViewPresetChange,
+  displayMode = 'mode_a',
+  onDisplayModeChange,
+  avatarStyle = 'translucent',
+  onAvatarStyleChange,
+  avatarOpacity = 0.55,
+  onAvatarOpacityChange,
   onResetCamera,
   onFitModel,
   showGrid,
@@ -77,6 +93,117 @@ export const ViewportToolbar: React.FC<ViewportToolbarProps> = ({
 
   return (
     <div className="w-full bg-studio-900 border-b border-studio-800 px-3 py-1.5 flex flex-wrap items-center justify-between gap-2 z-10 flex-shrink-0 select-none shadow-md">
+      {/* GARMENT STYLE SELECTOR (Plain Crew T-Shirt vs Polo T-Shirt) */}
+      {onGarmentTypeChange && (
+        <div className="flex items-center space-x-1 bg-studio-950 p-1 rounded-lg border border-studio-800">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-studio-400 font-bold px-1.5 mr-0.5">
+            Style:
+          </span>
+          <button
+            type="button"
+            onClick={() => onGarmentTypeChange('basic_crew')}
+            className={`flex items-center space-x-1 px-2.5 py-1 text-xs font-mono font-bold rounded-md transition-all ${
+              garmentType === 'basic_crew'
+                ? 'bg-blue-600 text-white shadow-md ring-1 ring-blue-400/50'
+                : 'text-studio-400 hover:text-white hover:bg-studio-800/80'
+            }`}
+            title="Plain Crew-Neck T-Shirt (Ribbed collar, cotton jersey)"
+          >
+            <Shirt className="w-3.5 h-3.5" />
+            <span>Plain T-Shirt</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => onGarmentTypeChange('polo')}
+            className={`flex items-center space-x-1 px-2.5 py-1 text-xs font-mono font-bold rounded-md transition-all ${
+              garmentType === 'polo'
+                ? 'bg-indigo-600 text-white shadow-md ring-1 ring-indigo-400/50'
+                : 'text-studio-400 hover:text-white hover:bg-studio-800/80'
+            }`}
+            title="Polo T-Shirt (Folded collar, front placket with buttons)"
+          >
+            <Shirt className="w-3.5 h-3.5 text-indigo-300" />
+            <span>Polo T-Shirt</span>
+          </button>
+        </div>
+      )}
+
+      {/* 0. MODE A (STANDALONE) / MODE B (AVATAR TRY-ON) TOGGLE */}
+      <div className="flex items-center space-x-1 bg-studio-950 p-1 rounded-lg border border-studio-800">
+        <button
+          type="button"
+          onClick={() => onDisplayModeChange?.('mode_a')}
+          className={`flex items-center space-x-1.5 px-2.5 py-1 text-xs font-mono font-bold rounded-md transition-all ${
+            displayMode === 'mode_a'
+              ? 'bg-blue-600 text-white shadow-md ring-1 ring-blue-400/50'
+              : 'text-studio-400 hover:text-white hover:bg-studio-800/80'
+          }`}
+          title="Mode A: Standalone Product Mode (Clean hero 3D garment preview without mannequin)"
+        >
+          <Shirt className="w-3.5 h-3.5" />
+          <span>MODE A (STANDALONE)</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onDisplayModeChange?.('mode_b')}
+          className={`flex items-center space-x-1.5 px-2.5 py-1 text-xs font-mono font-bold rounded-md transition-all ${
+            displayMode === 'mode_b'
+              ? 'bg-emerald-600 text-white shadow-md ring-1 ring-emerald-400/50'
+              : 'text-studio-400 hover:text-white hover:bg-studio-800/80'
+          }`}
+          title="Mode B: Avatar Try-On Mode (Parametric human mannequin collision proxy aligned inside garment)"
+        >
+          <User className="w-3.5 h-3.5" />
+          <span>MODE B (AVATAR)</span>
+        </button>
+      </div>
+
+      {/* Sub-controls when Mode B is active */}
+      {displayMode === 'mode_b' && (
+        <div className="flex items-center space-x-1 bg-studio-950 p-1 rounded-lg border border-emerald-500/30">
+          <span className="text-[10px] font-mono uppercase text-emerald-400 font-bold px-1.5">
+            Avatar:
+          </span>
+          <button
+            type="button"
+            onClick={() => onAvatarStyleChange?.('translucent')}
+            className={`px-2 py-0.5 text-[11px] font-mono rounded font-medium transition-all ${
+              avatarStyle === 'translucent'
+                ? 'bg-emerald-600/30 text-emerald-300 font-bold border border-emerald-500/40'
+                : 'text-studio-400 hover:text-white'
+            }`}
+            title="Translucent Ghost Proxy (View internal clearance & fabric drape)"
+          >
+            Ghost
+          </button>
+          <button
+            type="button"
+            onClick={() => onAvatarStyleChange?.('solid')}
+            className={`px-2 py-0.5 text-[11px] font-mono rounded font-medium transition-all ${
+              avatarStyle === 'solid'
+                ? 'bg-emerald-600/30 text-emerald-300 font-bold border border-emerald-500/40'
+                : 'text-studio-400 hover:text-white'
+            }`}
+            title="Solid Studio Mannequin (Opaque slate clay)"
+          >
+            Solid
+          </button>
+          <button
+            type="button"
+            onClick={() => onAvatarStyleChange?.('wireframe')}
+            className={`px-2 py-0.5 text-[11px] font-mono rounded font-medium transition-all ${
+              avatarStyle === 'wireframe'
+                ? 'bg-emerald-600/30 text-emerald-300 font-bold border border-emerald-500/40'
+                : 'text-studio-400 hover:text-white'
+            }`}
+            title="Collision Wireframe Mesh"
+          >
+            Wire
+          </button>
+        </div>
+      )}
+
       {/* 1. VIEW MODE BUTTONS (TEXTURED, SOLID, WIRE, SOLID + WIRE) */}
       <div className="flex items-center space-x-1 bg-studio-950 p-1 rounded-lg border border-studio-800">
         <span className="text-[10px] font-mono uppercase tracking-wider text-studio-400 font-bold px-1.5 mr-0.5">

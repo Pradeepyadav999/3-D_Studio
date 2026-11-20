@@ -6,6 +6,8 @@ export type SleeveType = 'short' | 'long';
 export type NeckType = 'round' | 'v_neck';
 export type ShadingMode = 'textured' | 'solid' | 'wireframe' | 'solid_wireframe';
 export type ViewPreset = 'perspective' | 'front' | 'back' | 'left' | 'right' | 'top';
+export type DisplayMode = 'mode_a' | 'mode_b'; // Mode A: Standalone Product | Mode B: Avatar Try-On
+export type AvatarStyle = 'solid' | 'translucent' | 'wireframe';
 
 export interface GarmentConfiguration {
   garment_type: string;

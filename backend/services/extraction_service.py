@@ -258,7 +258,7 @@ class ExtractionService:
 
             # Standard industry grading defaults if OCR missed certain fields
             # S: 96, M: 101, L: 107, XL: 112, XXL: 118
-            size_offsets = {"XS": -5, "S": 0, "M": 5, "L": 11, "XL": 16, "XXL": 22, "3XL": 28}
+            size_offsets = {"XS": -5, "S": 0, "M": 5, "L": 11, "XL": 16, "XXL": 22, "3XL": 28, "4XL": 34}
             offset = size_offsets.get(size_key, 0)
 
             chest = get_val_for_field("chest", 96.0 + offset)

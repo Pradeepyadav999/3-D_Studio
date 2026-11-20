@@ -1,0 +1,710 @@
+{
+  "plain_crew": {
+    "XS": {
+      "overall_status": "PASS",
+      "chest_circumference": {
+        "input_target_cm": 94.0,
+        "actual_glb_cm": 94.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "shoulder_width": {
+        "input_target_cm": 43.0,
+        "actual_glb_cm": 43.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "body_length": {
+        "input_target_cm": 66.0,
+        "actual_glb_cm": 66.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "sleeve_length": {
+        "input_target_cm": 19.0,
+        "actual_glb_cm": 19.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "torso_depth": {
+        "actual_glb_cm": 19.3
+      },
+      "overall_dimensions": {
+        "width_cm": 75.25,
+        "height_cm": 66.0,
+        "depth_cm": 19.3
+      },
+      "mesh_topology": {
+        "vertex_count": 1438,
+        "polygon_count": 2492,
+        "topology": "2-Manifold Polygonal Mesh"
+      }
+    },
+    "S": {
+      "overall_status": "PASS",
+      "chest_circumference": {
+        "input_target_cm": 100.0,
+        "actual_glb_cm": 100.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "shoulder_width": {
+        "input_target_cm": 46.0,
+        "actual_glb_cm": 46.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "body_length": {
+        "input_target_cm": 68.0,
+        "actual_glb_cm": 68.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "sleeve_length": {
+        "input_target_cm": 20.0,
+        "actual_glb_cm": 20.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "torso_depth": {
+        "actual_glb_cm": 20.54
+      },
+      "overall_dimensions": {
+        "width_cm": 80.5,
+        "height_cm": 68.0,
+        "depth_cm": 20.54
+      },
+      "mesh_topology": {
+        "vertex_count": 1438,
+        "polygon_count": 2492,
+        "topology": "2-Manifold Polygonal Mesh"
+      }
+    },
+    "M": {
+      "overall_status": "PASS",
+      "chest_circumference": {
+        "input_target_cm": 106.0,
+        "actual_glb_cm": 106.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "shoulder_width": {
+        "input_target_cm": 49.0,
+        "actual_glb_cm": 49.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "body_length": {
+        "input_target_cm": 71.0,
+        "actual_glb_cm": 71.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "sleeve_length": {
+        "input_target_cm": 21.0,
+        "actual_glb_cm": 21.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "torso_depth": {
+        "actual_glb_cm": 21.77
+      },
+      "overall_dimensions": {
+        "width_cm": 85.75,
+        "height_cm": 71.0,
+        "depth_cm": 21.77
+      },
+      "mesh_topology": {
+        "vertex_count": 1438,
+        "polygon_count": 2492,
+        "topology": "2-Manifold Polygonal Mesh"
+      }
+    },
+    "L": {
+      "overall_status": "PASS",
+      "chest_circumference": {
+        "input_target_cm": 112.0,
+        "actual_glb_cm": 112.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "shoulder_width": {
+        "input_target_cm": 52.0,
+        "actual_glb_cm": 52.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "body_length": {
+        "input_target_cm": 73.0,
+        "actual_glb_cm": 73.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "sleeve_length": {
+        "input_target_cm": 22.0,
+        "actual_glb_cm": 22.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "torso_depth": {
+        "actual_glb_cm": 23.0
+      },
+      "overall_dimensions": {
+        "width_cm": 91.0,
+        "height_cm": 73.0,
+        "depth_cm": 23.0
+      },
+      "mesh_topology": {
+        "vertex_count": 1438,
+        "polygon_count": 2492,
+        "topology": "2-Manifold Polygonal Mesh"
+      }
+    },
+    "XL": {
+      "overall_status": "PASS",
+      "chest_circumference": {
+        "input_target_cm": 118.0,
+        "actual_glb_cm": 118.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "shoulder_width": {
+        "input_target_cm": 55.0,
+        "actual_glb_cm": 55.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "body_length": {
+        "input_target_cm": 75.0,
+        "actual_glb_cm": 75.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "sleeve_length": {
+        "input_target_cm": 23.0,
+        "actual_glb_cm": 23.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "torso_depth": {
+        "actual_glb_cm": 24.23
+      },
+      "overall_dimensions": {
+        "width_cm": 96.25,
+        "height_cm": 75.0,
+        "depth_cm": 24.23
+      },
+      "mesh_topology": {
+        "vertex_count": 1438,
+        "polygon_count": 2492,
+        "topology": "2-Manifold Polygonal Mesh"
+      }
+    },
+    "XXL": {
+      "overall_status": "PASS",
+      "chest_circumference": {
+        "input_target_cm": 124.0,
+        "actual_glb_cm": 124.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "shoulder_width": {
+        "input_target_cm": 58.0,
+        "actual_glb_cm": 58.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "body_length": {
+        "input_target_cm": 77.0,
+        "actual_glb_cm": 77.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "sleeve_length": {
+        "input_target_cm": 24.0,
+        "actual_glb_cm": 24.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "torso_depth": {
+        "actual_glb_cm": 25.46
+      },
+      "overall_dimensions": {
+        "width_cm": 101.5,
+        "height_cm": 77.0,
+        "depth_cm": 25.46
+      },
+      "mesh_topology": {
+        "vertex_count": 1438,
+        "polygon_count": 2492,
+        "topology": "2-Manifold Polygonal Mesh"
+      }
+    },
+    "3XL": {
+      "overall_status": "PASS",
+      "chest_circumference": {
+        "input_target_cm": 130.0,
+        "actual_glb_cm": 130.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "shoulder_width": {
+        "input_target_cm": 61.0,
+        "actual_glb_cm": 61.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "body_length": {
+        "input_target_cm": 79.0,
+        "actual_glb_cm": 79.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "sleeve_length": {
+        "input_target_cm": 25.0,
+        "actual_glb_cm": 25.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "torso_depth": {
+        "actual_glb_cm": 26.7
+      },
+      "overall_dimensions": {
+        "width_cm": 106.75,
+        "height_cm": 79.0,
+        "depth_cm": 26.7
+      },
+      "mesh_topology": {
+        "vertex_count": 1438,
+        "polygon_count": 2492,
+        "topology": "2-Manifold Polygonal Mesh"
+      }
+    },
+    "4XL": {
+      "overall_status": "PASS",
+      "chest_circumference": {
+        "input_target_cm": 136.0,
+        "actual_glb_cm": 136.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "shoulder_width": {
+        "input_target_cm": 64.0,
+        "actual_glb_cm": 64.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "body_length": {
+        "input_target_cm": 81.0,
+        "actual_glb_cm": 81.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "sleeve_length": {
+        "input_target_cm": 26.0,
+        "actual_glb_cm": 26.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "torso_depth": {
+        "actual_glb_cm": 27.93
+      },
+      "overall_dimensions": {
+        "width_cm": 112.0,
+        "height_cm": 81.0,
+        "depth_cm": 27.93
+      },
+      "mesh_topology": {
+        "vertex_count": 1438,
+        "polygon_count": 2492,
+        "topology": "2-Manifold Polygonal Mesh"
+      }
+    }
+  },
+  "polo": {
+    "XS": {
+      "overall_status": "PASS",
+      "chest_circumference": {
+        "input_target_cm": 94.0,
+        "actual_glb_cm": 94.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "shoulder_width": {
+        "input_target_cm": 43.0,
+        "actual_glb_cm": 43.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "body_length": {
+        "input_target_cm": 66.0,
+        "actual_glb_cm": 66.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "sleeve_length": {
+        "input_target_cm": 19.0,
+        "actual_glb_cm": 19.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "torso_depth": {
+        "actual_glb_cm": 19.3
+      },
+      "overall_dimensions": {
+        "width_cm": 75.25,
+        "height_cm": 66.0,
+        "depth_cm": 19.3
+      },
+      "mesh_topology": {
+        "vertex_count": 1630,
+        "polygon_count": 2608,
+        "topology": "2-Manifold Polygonal Mesh"
+      }
+    },
+    "S": {
+      "overall_status": "PASS",
+      "chest_circumference": {
+        "input_target_cm": 100.0,
+        "actual_glb_cm": 100.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "shoulder_width": {
+        "input_target_cm": 46.0,
+        "actual_glb_cm": 46.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "body_length": {
+        "input_target_cm": 68.0,
+        "actual_glb_cm": 68.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "sleeve_length": {
+        "input_target_cm": 20.0,
+        "actual_glb_cm": 20.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "torso_depth": {
+        "actual_glb_cm": 20.54
+      },
+      "overall_dimensions": {
+        "width_cm": 80.5,
+        "height_cm": 68.0,
+        "depth_cm": 20.54
+      },
+      "mesh_topology": {
+        "vertex_count": 1630,
+        "polygon_count": 2608,
+        "topology": "2-Manifold Polygonal Mesh"
+      }
+    },
+    "M": {
+      "overall_status": "PASS",
+      "chest_circumference": {
+        "input_target_cm": 106.0,
+        "actual_glb_cm": 106.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "shoulder_width": {
+        "input_target_cm": 49.0,
+        "actual_glb_cm": 49.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "body_length": {
+        "input_target_cm": 71.0,
+        "actual_glb_cm": 71.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "sleeve_length": {
+        "input_target_cm": 21.0,
+        "actual_glb_cm": 21.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "torso_depth": {
+        "actual_glb_cm": 21.77
+      },
+      "overall_dimensions": {
+        "width_cm": 85.75,
+        "height_cm": 71.0,
+        "depth_cm": 21.77
+      },
+      "mesh_topology": {
+        "vertex_count": 1630,
+        "polygon_count": 2608,
+        "topology": "2-Manifold Polygonal Mesh"
+      }
+    },
+    "L": {
+      "overall_status": "PASS",
+      "chest_circumference": {
+        "input_target_cm": 112.0,
+        "actual_glb_cm": 112.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "shoulder_width": {
+        "input_target_cm": 52.0,
+        "actual_glb_cm": 52.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "body_length": {
+        "input_target_cm": 73.0,
+        "actual_glb_cm": 73.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "sleeve_length": {
+        "input_target_cm": 22.0,
+        "actual_glb_cm": 22.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "torso_depth": {
+        "actual_glb_cm": 23.0
+      },
+      "overall_dimensions": {
+        "width_cm": 91.0,
+        "height_cm": 73.0,
+        "depth_cm": 23.0
+      },
+      "mesh_topology": {
+        "vertex_count": 1630,
+        "polygon_count": 2608,
+        "topology": "2-Manifold Polygonal Mesh"
+      }
+    },
+    "XL": {
+      "overall_status": "PASS",
+      "chest_circumference": {
+        "input_target_cm": 118.0,
+        "actual_glb_cm": 118.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "shoulder_width": {
+        "input_target_cm": 55.0,
+        "actual_glb_cm": 55.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "body_length": {
+        "input_target_cm": 75.0,
+        "actual_glb_cm": 75.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "sleeve_length": {
+        "input_target_cm": 23.0,
+        "actual_glb_cm": 23.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "torso_depth": {
+        "actual_glb_cm": 24.23
+      },
+      "overall_dimensions": {
+        "width_cm": 96.25,
+        "height_cm": 75.0,
+        "depth_cm": 24.23
+      },
+      "mesh_topology": {
+        "vertex_count": 1630,
+        "polygon_count": 2608,
+        "topology": "2-Manifold Polygonal Mesh"
+      }
+    },
+    "XXL": {
+      "overall_status": "PASS",
+      "chest_circumference": {
+        "input_target_cm": 124.0,
+        "actual_glb_cm": 124.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "shoulder_width": {
+        "input_target_cm": 58.0,
+        "actual_glb_cm": 58.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "body_length": {
+        "input_target_cm": 77.0,
+        "actual_glb_cm": 77.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "sleeve_length": {
+        "input_target_cm": 24.0,
+        "actual_glb_cm": 24.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "torso_depth": {
+        "actual_glb_cm": 25.46
+      },
+      "overall_dimensions": {
+        "width_cm": 101.5,
+        "height_cm": 77.0,
+        "depth_cm": 25.46
+      },
+      "mesh_topology": {
+        "vertex_count": 1630,
+        "polygon_count": 2608,
+        "topology": "2-Manifold Polygonal Mesh"
+      }
+    },
+    "3XL": {
+      "overall_status": "PASS",
+      "chest_circumference": {
+        "input_target_cm": 130.0,
+        "actual_glb_cm": 130.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "shoulder_width": {
+        "input_target_cm": 61.0,
+        "actual_glb_cm": 61.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "body_length": {
+        "input_target_cm": 79.0,
+        "actual_glb_cm": 79.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "sleeve_length": {
+        "input_target_cm": 25.0,
+        "actual_glb_cm": 25.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "torso_depth": {
+        "actual_glb_cm": 26.7
+      },
+      "overall_dimensions": {
+        "width_cm": 106.75,
+        "height_cm": 79.0,
+        "depth_cm": 26.7
+      },
+      "mesh_topology": {
+        "vertex_count": 1630,
+        "polygon_count": 2608,
+        "topology": "2-Manifold Polygonal Mesh"
+      }
+    },
+    "4XL": {
+      "overall_status": "PASS",
+      "chest_circumference": {
+        "input_target_cm": 136.0,
+        "actual_glb_cm": 136.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "shoulder_width": {
+        "input_target_cm": 64.0,
+        "actual_glb_cm": 64.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "body_length": {
+        "input_target_cm": 81.0,
+        "actual_glb_cm": 81.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "sleeve_length": {
+        "input_target_cm": 26.0,
+        "actual_glb_cm": 26.0,
+        "difference_cm": 0.0,
+        "tolerance_cm": 0.5,
+        "status": "PASS"
+      },
+      "torso_depth": {
+        "actual_glb_cm": 27.93
+      },
+      "overall_dimensions": {
+        "width_cm": 112.0,
+        "height_cm": 81.0,
+        "depth_cm": 27.93
+      },
+      "mesh_topology": {
+        "vertex_count": 1630,
+        "polygon_count": 2608,
+        "topology": "2-Manifold Polygonal Mesh"
+      }
+    }
+  }
+}

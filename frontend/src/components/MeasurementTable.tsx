@@ -19,8 +19,8 @@ export const MeasurementTable: React.FC<MeasurementTableProps> = ({
   onConfirmMeasurements,
   isConfirmed,
 }) => {
-  // Ensure canonical sizes S, M, L, XL, XXL in correct order
-  const standardSizes = ['S', 'M', 'L', 'XL', 'XXL'];
+  // Ensure canonical sizes XS, S, M, L, XL, XXL, 3XL, 4XL in correct order
+  const standardSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL'];
   const availableChartSizes = Object.keys(chartData.sizes);
   const displaySizes = standardSizes.filter((s) => availableChartSizes.includes(s));
   const sizes = displaySizes.length > 0 ? displaySizes : availableChartSizes;

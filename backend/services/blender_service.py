@@ -97,13 +97,16 @@ class BlenderService:
             detail_image_path=detail_img_path
         )
 
-        # Standard realistic apparel dimensions in meters fallback
+        # Standard realistic apparel dimensions in meters fallback (8 sizes: XS through 4XL)
         size_specs = {
+            "XS":  {"chest": 0.94, "shoulder": 0.43, "length": 0.66, "sleeve": 0.19},
             "S":   {"chest": 1.00, "shoulder": 0.46, "length": 0.68, "sleeve": 0.20},
             "M":   {"chest": 1.06, "shoulder": 0.49, "length": 0.71, "sleeve": 0.21},
             "L":   {"chest": 1.12, "shoulder": 0.52, "length": 0.73, "sleeve": 0.22},
             "XL":  {"chest": 1.18, "shoulder": 0.55, "length": 0.75, "sleeve": 0.23},
             "XXL": {"chest": 1.24, "shoulder": 0.58, "length": 0.77, "sleeve": 0.24},
+            "3XL": {"chest": 1.30, "shoulder": 0.61, "length": 0.79, "sleeve": 0.25},
+            "4XL": {"chest": 1.36, "shoulder": 0.64, "length": 0.81, "sleeve": 0.26},
         }
 
         # Resolve measurements strictly from user's size card if provided
@@ -334,7 +337,9 @@ class BlenderService:
                     "sleeve": norm_measurements["sleeve"] * 100.0
                 }
                 from backend.validation.garment_geometry_auditor import GarmentGeometryAuditor
-                accuracy_report = GarmentGeometryAuditor.audit_glb(output_glb_path, targets_cm)
+                accuracy_report = GarmentGeometryAuditor.audit_glb(
+                    output_glb_path, targets_cm, measured_override=meta_dict.get("measured_mesh_cm")
+                )
             except Exception as audit_err:
                 logger.warning(f"Accuracy audit error: {audit_err}")
 

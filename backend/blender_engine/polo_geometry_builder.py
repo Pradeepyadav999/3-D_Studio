@@ -1,675 +1,628 @@
-"""Dedicated High-Realism Parametric Polo T-Shirt Builder for Blender (bpy).
-Constructs a photorealistic standalone Men's Polo T-Shirt matching Pacdora 3D mockup standards:
-- 2-Piece Structured Collar: Vertical collar stand (2.5 cm) + turned-down crescent collar leaf spreading naturally over shoulders and chest
-- Tailored Front Placket: 3.6 cm wide, 15.5 cm long with raised relief, topstitching box, and center line
-- Real 3D Buttons: Pearl cylindrical buttons (11 mm diameter) with recessed face and thread holes
-- Set-In Draped Sleeves: 28-degree downward pitch with 2.5 cm ribbed cuffs
-- Tennis-Tail Hem: Dropped back hem with side vent splits
-- Cotton Piqué PBR Material Setup with physical 1.4 mm fabric thickness (Solidify) and subdivision surface
 """
+High-Precision Parametric Polo T-Shirt Geometry Builder.
+Pacdora-Grade Tailored Realism:
+- True Anatomical Shoulders: 12-14 cm Deltoid Depth in Y
+- Smooth Tangent Neck Scoop (Zero sharp kinks)
+- Rolled Polo Collar with Natural Cloth Fold over Stand & Clean V-Throat
+- Distinct Triangular Collar Wings Lying Gently on Chest
+- Integrated Placket with Pearl Buttons
+- Relaxed A-Pose Sleeves: 45° drape, 14° forward pitch, open cuffs
+- Continuous 2-Manifold Quad Topology with Smooth Cloth Shading
+"""
+
 import sys
 import os
-
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
-
 import math
-import numpy as np
+from typing import Dict, Any, Optional, Tuple, List
 
 try:
     import bpy
     import bmesh
-    from mathutils import Vector, Matrix
+    from mathutils import Vector
 except ImportError:
     bpy = None
     bmesh = None
     Vector = None
-    Matrix = None
-
-from backend.blender_engine.measurement_utils import (
-    solve_ellipse_radii, calculate_anatomical_landmarks
-)
 
 
-def create_button_mesh(bm, center: Vector, radius: float = 0.0055, thickness: float = 0.002, color_mat_index: int = 1):
+def solve_ellipse_radii(circ: float, aspect: float = 1.48) -> Tuple[float, float]:
+    """Solves Ramanujan ellipse circumference for half-axes a (width) and b (depth)."""
+    r = aspect
+    b = circ / (math.pi * (3.0 * (r + 1.0) - math.sqrt((3.0 * r + 1.0) * (r + 3.0))))
+    a = r * b
+    for _ in range(40):
+        curr_c = math.pi * (3.0 * (a + b) - math.sqrt((3.0 * a + b) * (a + 3.0 * b)))
+        error = curr_c - circ
+        if abs(error) < 1e-8:
+            break
+        delta = 1e-6
+        b_plus = b + delta
+        a_plus = r * b_plus
+        c_plus = math.pi * (3.0 * (a_plus + b_plus) - math.sqrt((3.0 * a_plus + b_plus) * (a_plus + 3.0 * b_plus)))
+        dc_db = (c_plus - curr_c) / delta
+        b = b - error / dc_db
+        a = r * b
+    return a, b
+
+
+def build_polo_mesh(config: Optional[Dict[str, Any]] = None,
+                    output_blend: Optional[str] = None,
+                    output_glb: Optional[str] = None) -> Any:
     """
-    Creates an individual 3D pearl button (12-sided beveled cylinder with sunken face).
-    """
-    N_SIDES = 12
-    # Create front rim vertices, back rim vertices, and sunken center vertices
-    front_verts = []
-    back_verts = []
-    center_verts = []
-
-    z_front = center.z
-    z_back = center.z - thickness
-    z_recess = center.z - (thickness * 0.4)
-    y_front = center.y + 0.0015  # slightly proud of placket
-
-    # Rim outer
-    for i in range(N_SIDES):
-        angle = 2.0 * math.pi * i / N_SIDES
-        vx = center.x + radius * math.cos(angle)
-        vz = z_front + radius * math.sin(angle)
-        v_front = bm.verts.new(Vector((vx, y_front, vz)))
-        v_back = bm.verts.new(Vector((vx, y_front - thickness, vz)))
-        front_verts.append(v_front)
-        back_verts.append(v_back)
-
-    # Recessed inner face
-    for i in range(N_SIDES):
-        angle = 2.0 * math.pi * i / N_SIDES
-        vx = center.x + (radius * 0.72) * math.cos(angle)
-        vz = z_front + (radius * 0.72) * math.sin(angle)
-        v_in = bm.verts.new(Vector((vx, y_front - (thickness * 0.35), vz)))
-        center_verts.append(v_in)
-
-    center_pin = bm.verts.new(Vector((center.x, y_front - (thickness * 0.45), z_front)))
-
-    # Faces: side cylinder
-    for i in range(N_SIDES):
-        next_i = (i + 1) % N_SIDES
-        f = bm.faces.new([
-            front_verts[i], front_verts[next_i],
-            back_verts[next_i], back_verts[i]
-        ])
-        f.material_index = color_mat_index
-
-    # Faces: beveled rim into recess
-    for i in range(N_SIDES):
-        next_i = (i + 1) % N_SIDES
-        f = bm.faces.new([
-            front_verts[i], center_verts[i],
-            center_verts[next_i], front_verts[next_i]
-        ])
-        f.material_index = color_mat_index
-
-    # Faces: center fan
-    for i in range(N_SIDES):
-        next_i = (i + 1) % N_SIDES
-        f = bm.faces.new([
-            center_verts[i], center_pin, center_verts[next_i]
-        ])
-        f.material_index = color_mat_index
-
-    # Back face fan
-    back_pin = bm.verts.new(Vector((center.x, y_front - thickness, z_front)))
-    for i in range(N_SIDES):
-        next_i = (i + 1) % N_SIDES
-        f = bm.faces.new([
-            back_verts[next_i], back_pin, back_verts[i]
-        ])
-        f.material_index = color_mat_index
-
-
-def build_polo_mesh(bm, uv_layer, measurements: dict, config: dict) -> dict:
-    """
-    Constructs the complete 3D Polo garment mesh inside a bmesh instance.
-    """
-    chest_m = float(measurements.get("chest", 1.06))
-    shoulder_m = float(measurements.get("shoulder", 0.49))
-    length_m = float(measurements.get("length", 0.71))
-    sleeve_m = float(measurements.get("sleeve", 0.22))
-    fit = config.get("fit", "regular")
-
-    # Ramanujan ellipse aspect ratio for athletic torso
-    aspect = 2.45
-    if fit == "slim":
-        aspect = 2.38
-    elif fit == "relaxed":
-        aspect = 2.52
-
-    hem_m = float(measurements.get("hem") or (chest_m * 0.98))
-    waist_m = float(measurements.get("waist") or (chest_m * 0.96))
-
-    a_hem, b_hem = solve_ellipse_radii(hem_m, aspect * 0.97)
-    a_waist, b_waist = solve_ellipse_radii(waist_m, aspect)
-    a_chest, b_chest = solve_ellipse_radii(chest_m, aspect * 1.01)
-
-    z_hem = 0.0
-    armhole_depth = max(0.185, shoulder_m * 0.44)
-    z_underarm = length_m - armhole_depth
-    shoulder_half_w = shoulder_m / 2.0
-    neck_half_w = shoulder_half_w * 0.43  # ~43% for polo collar base
-
-    z_hps = length_m
-    slope_drop = (shoulder_half_w - neck_half_w) * math.tan(math.radians(14.0))
-    z_shoulder_tip = z_hps - slope_drop
-
-    neck_front_drop = 0.092
-    neck_back_drop = 0.022
-    z_neck_front = z_hps - neck_front_drop
-    z_neck_back = z_hps - neck_back_drop
-
-    # Topology parameters
-    N_COLS = 32
-    N_RINGS_LOWER = 14
-
-    torso_rings = []
-
-    # 1. LOWER TORSO (Hem to Underarm)
-    for r in range(N_RINGS_LOWER + 1):
-        t = r / float(N_RINGS_LOWER)
-        if t < 0.38:
-            s = t / 0.38
-            s_ease = 0.5 * (1.0 - math.cos(math.pi * s))
-            cur_a = a_hem * (1 - s_ease) + a_waist * s_ease
-            cur_b = b_hem * (1 - s_ease) + b_waist * s_ease
-        else:
-            s = (t - 0.38) / 0.62
-            s_ease = 0.5 * (1.0 - math.cos(math.pi * s))
-            cur_a = a_waist * (1 - s_ease) + a_chest * s_ease
-            cur_b = b_waist * (1 - s_ease) + b_chest * s_ease
-
-        z_nom = z_hem + t * z_underarm
-
-        # Tennis-tail hem: back hem drops 1.6 cm lower than front hem at bottom rings
-        tennis_tail_drop = -0.016 * ((1.0 - t) ** 2.2)
-
-        # Catenary gravity drape
-        drape_env = math.sin(math.pi * t) if (0.0 < t < 1.0) else 0.0
-
-        ring = []
-        for i in range(N_COLS):
-            theta = 2.0 * math.pi * i / float(N_COLS)
-            sin_th = math.sin(theta)
-            cos_th = math.cos(theta)
-
-            x = cur_a * sin_th
-            y = cur_b * cos_th
-
-            # Subtle thoracic curvature & natural chest contour
-            if y > 0:
-                y += 0.007 * (sin_th ** 2) * math.sin(math.pi * t)
-            else:
-                y += 0.004 * (sin_th ** 2) * math.sin(math.pi * t)
-
-            # Drape wrinkles
-            drape = 0.0024 * drape_env * math.sin(4.0 * theta + 0.3)
-            y += drape
-
-            # Tennis tail: back of garment (cos_th < 0) drops lower
-            z_adjust = tennis_tail_drop * max(0.0, -cos_th)
-            z = z_nom + z_adjust
-
-            v = bm.verts.new(Vector((x, y, z)))
-            ring.append(v)
-
-        torso_rings.append(ring)
-
-    # Bridge lower torso rings into quads
-    for r in range(N_RINGS_LOWER):
-        r_curr = torso_rings[r]
-        r_next = torso_rings[r + 1]
-        t_curr = r / float(N_RINGS_LOWER)
-        t_next = (r + 1) / float(N_RINGS_LOWER)
-
-        for i in range(N_COLS):
-            # Side vent split at very bottom ring (r == 0) at left/right side seams (indices 8 and 24)
-            if r == 0 and (i == 7 or i == 8 or i == 23 or i == 24):
-                # Side vent opening - skip stitching side seam face for authentic polo vent
-                continue
-
-            next_i = (i + 1) % N_COLS
-            v1 = r_curr[i]
-            v2 = r_curr[next_i]
-            v3 = r_next[next_i]
-            v4 = r_next[i]
-
-            face = bm.faces.new([v1, v2, v3, v4])
-            face.material_index = 0
-
-            # UV coordinates
-            if uv_layer:
-                u1 = i / float(N_COLS)
-                u2 = (i + 1) / float(N_COLS)
-                v_bottom = t_curr * 0.65
-                v_top = t_next * 0.65
-                face.loops[0][uv_layer].uv = (u1, v_bottom)
-                face.loops[1][uv_layer].uv = (u2, v_bottom)
-                face.loops[2][uv_layer].uv = (u2, v_top)
-                face.loops[3][uv_layer].uv = (u1, v_top)
-
-    # 2. UPPER TORSO (Underarm to Shoulder / Neck)
-    N_RINGS_UPPER = 8
-    upper_rings = []
-    top_lower_ring = torso_rings[-1]
-    upper_rings.append(top_lower_ring)
-
-    # Placket dimensions
-    placket_half_w = 0.018  # 3.6 cm wide placket
-    placket_depth = 0.155   # 15.5 cm down from HPS
-    z_placket_bottom = z_hps - placket_depth
-
-    for r in range(1, N_RINGS_UPPER + 1):
-        u_t = r / float(N_RINGS_UPPER)
-        u_ease = 0.5 * (1.0 - math.cos(math.pi * u_t))
-
-        ring = []
-        for i in range(N_COLS):
-            theta = 2.0 * math.pi * i / float(N_COLS)
-            sin_th = math.sin(theta)
-            cos_th = math.cos(theta)
-
-            # Lateral span transitions from chest radius to shoulder width
-            lat_w = a_chest * (1.0 - u_ease) + shoulder_half_w * u_ease
-
-            # Front-to-back depth narrows towards neck
-            depth_b = b_chest * (1.0 - u_ease) + (b_chest * 0.72) * u_ease
-
-            x = lat_w * sin_th
-            y = depth_b * cos_th
-
-            # Base vertical coordinate
-            z_nominal = z_underarm + u_t * (z_shoulder_tip - z_underarm)
-
-            # Neck scoop transition at upper rings
-            if u_t > 0.45:
-                w_factor = (u_t - 0.45) / 0.55
-                # Front scoop (cos_th > 0)
-                if cos_th > 0:
-                    z_target = z_neck_front + (z_hps - z_neck_front) * (1.0 - (sin_th ** 2))
-                    z_nominal = z_nominal * (1.0 - w_factor) + z_target * w_factor
-                else:
-                    # Back neck (cos_th <= 0)
-                    z_target = z_neck_back + (z_hps - z_neck_back) * (1.0 - (sin_th ** 2))
-                    z_nominal = z_nominal * (1.0 - w_factor) + z_target * w_factor
-
-            v = bm.verts.new(Vector((x, y, z_nominal)))
-            ring.append(v)
-
-        upper_rings.append(ring)
-
-    # Bridge upper torso rings
-    for r in range(N_RINGS_UPPER):
-        r_curr = upper_rings[r]
-        r_next = upper_rings[r + 1]
-        v_b = 0.65 + (r / float(N_RINGS_UPPER)) * 0.35
-        v_t = 0.65 + ((r + 1) / float(N_RINGS_UPPER)) * 0.35
-
-        for i in range(N_COLS):
-            next_i = (i + 1) % N_COLS
-            # Preserve armhole openings: indices 6..10 (left) and 22..26 (right) above ring 2
-            is_armhole = (r >= 2) and ((6 <= i <= 9) or (22 <= i <= 25))
-            if is_armhole:
-                continue
-
-            v1 = r_curr[i]
-            v2 = r_curr[next_i]
-            v3 = r_next[next_i]
-            v4 = r_next[i]
-
-            face = bm.faces.new([v1, v2, v3, v4])
-            face.material_index = 0
-
-            if uv_layer:
-                u1 = i / float(N_COLS)
-                u2 = (i + 1) / float(N_COLS)
-                face.loops[0][uv_layer].uv = (u1, v_b)
-                face.loops[1][uv_layer].uv = (u2, v_b)
-                face.loops[2][uv_layer].uv = (u2, v_t)
-                face.loops[3][uv_layer].uv = (u1, v_t)
-
-    # 3. TAILORED FRONT PLACKET
-    # Build rectangular placket box centered on chest from z_neck_front down to z_placket_bottom
-    y_placket = b_chest * 0.99
-    z_p_top = z_neck_front + 0.015
-    z_p_bot = z_placket_bottom
-
-    p_relief = 0.0022  # 2.2 mm raised relief
-
-    # Outer placket corners
-    placket_verts_front = [
-        bm.verts.new(Vector((-placket_half_w, y_placket + p_relief, z_p_top))),
-        bm.verts.new(Vector((placket_half_w, y_placket + p_relief, z_p_top))),
-        bm.verts.new(Vector((placket_half_w, y_placket + p_relief, z_p_bot))),
-        bm.verts.new(Vector((-placket_half_w, y_placket + p_relief, z_p_bot))),
-        # Center divider vertices (left placket / right placket seam)
-        bm.verts.new(Vector((0.0, y_placket + p_relief, z_p_top))),
-        bm.verts.new(Vector((0.0, y_placket + p_relief, z_p_bot))),
-    ]
-
-    # Placket faces
-    f_p_left = bm.faces.new([placket_verts_front[0], placket_verts_front[4], placket_verts_front[5], placket_verts_front[3]])
-    f_p_right = bm.faces.new([placket_verts_front[4], placket_verts_front[1], placket_verts_front[2], placket_verts_front[5]])
-    f_p_left.material_index = 0
-    f_p_right.material_index = 0
-
-    # Placket side relief edges (giving clean 3D thickness)
-    p_sides = [
-        # Left edge
-        bm.faces.new([
-            bm.verts.new(Vector((-placket_half_w, y_placket, z_p_top))),
-            placket_verts_front[0],
-            placket_verts_front[3],
-            bm.verts.new(Vector((-placket_half_w, y_placket, z_p_bot)))
-        ]),
-        # Right edge
-        bm.faces.new([
-            placket_verts_front[1],
-            bm.verts.new(Vector((placket_half_w, y_placket, z_p_top))),
-            bm.verts.new(Vector((placket_half_w, y_placket, z_p_bot))),
-            placket_verts_front[2]
-        ]),
-        # Bottom edge
-        bm.faces.new([
-            placket_verts_front[3],
-            placket_verts_front[2],
-            bm.verts.new(Vector((placket_half_w, y_placket, z_p_bot))),
-            bm.verts.new(Vector((-placket_half_w, y_placket, z_p_bot)))
-        ])
-    ]
-    for pf in p_sides:
-        pf.material_index = 0
-
-    # 4. REAL 3D BUTTONS
-    # 2 buttons: top button and middle button
-    btn_count = int(config.get("button_count", 2))
-    btn_z_positions = []
-    if btn_count == 2:
-        btn_z_positions = [
-            z_p_top - 0.038,
-            z_p_top - 0.098
-        ]
-    elif btn_count >= 3:
-        btn_z_positions = [
-            z_p_top - 0.030,
-            z_p_top - 0.078,
-            z_p_top - 0.126
-        ]
-
-    for bz in btn_z_positions:
-        btn_center = Vector((0.0, y_placket + p_relief + 0.0005, bz))
-        create_button_mesh(bm, btn_center, radius=0.0055, thickness=0.0022, color_mat_index=1)
-
-    # 5. TWO-PIECE REAL 3D POLO COLLAR
-    # A) Collar Stand (2.4 cm vertical stand hugging neck aperture)
-    # B) Turned-Down Crescent Collar Leaf (folds over stand and spreads over shoulders)
-    N_COLLAR_SEGS = 24
-    stand_height = 0.024
-    leaf_width_back = 0.046
-    leaf_width_front = 0.062
-
-    # Neck ellipse radii for collar base
-    r_neck_x = neck_half_w * 0.96
-    r_neck_y = (b_chest * 0.65)
-
-    stand_base_verts = []
-    stand_top_verts = []
-    leaf_outer_verts = []
-
-    # Angular span: from right placket opening (+angle) around back to left placket opening
-    # Leaves a 2.8 cm front placket gap where collar points separate naturally
-    start_th = math.radians(22.0)
-    end_th = math.radians(338.0)
-
-    for i in range(N_COLLAR_SEGS + 1):
-        frac = i / float(N_COLLAR_SEGS)
-        th = start_th + frac * (end_th - start_th)
-        cos_t = math.cos(th)
-        sin_t = math.sin(th)
-
-        # Base point on neckline
-        bx = r_neck_x * sin_t
-        by = r_neck_y * cos_t
-
-        # Neck contour height
-        if cos_t > 0:
-            bz = z_neck_front + (z_hps - z_neck_front) * (1.0 - (sin_t ** 2))
-        else:
-            bz = z_neck_back + (z_hps - z_neck_back) * (1.0 - (sin_t ** 2))
-
-        v_base = bm.verts.new(Vector((bx, by, bz)))
-        stand_base_verts.append(v_base)
-
-        # Stand top: goes vertically up and tilts slightly inward (5 deg)
-        tx = bx * 0.94
-        ty = by * 0.94
-        tz = bz + stand_height
-        v_top = bm.verts.new(Vector((tx, ty, tz)))
-        stand_top_verts.append(v_top)
-
-        # Collar leaf outer edge: rolls DOWN and OUT over the stand!
-        # At back (cos_t < 0): rolls outward and down by leaf_width_back
-        # At front (cos_t > 0): flares forward and down into sharp collar points
-        front_weight = max(0.0, cos_t)
-        leaf_len = leaf_width_back * (1.0 - front_weight) + leaf_width_front * front_weight
-
-        # Outward radial unit vector
-        rad_len = math.sqrt(bx * bx + by * by) or 1.0
-        ux = bx / rad_len
-        uy = by / rad_len
-
-        # Points flare forward-laterally
-        lx = tx + ux * leaf_len * 1.15
-        ly = ty + uy * leaf_len * 0.95
-        # Leaf drapes downward below stand top
-        lz = tz - leaf_len * 0.68
-
-        # Extra downward spread for front collar points resting on chest
-        if front_weight > 0.4:
-            lz -= 0.012 * front_weight
-            ly += 0.008 * front_weight
-
-        v_leaf = bm.verts.new(Vector((lx, ly, lz)))
-        leaf_outer_verts.append(v_leaf)
-
-    # Faces: Collar Stand
-    for i in range(N_COLLAR_SEGS):
-        f = bm.faces.new([
-            stand_base_verts[i], stand_base_verts[i + 1],
-            stand_top_verts[i + 1], stand_top_verts[i]
-        ])
-        f.material_index = 0
-
-    # Faces: Collar Leaf Fall (outer turned-down layer)
-    for i in range(N_COLLAR_SEGS):
-        f = bm.faces.new([
-            stand_top_verts[i], stand_top_verts[i + 1],
-            leaf_outer_verts[i + 1], leaf_outer_verts[i]
-        ])
-        f.material_index = 0
-
-    # Front collar point end caps
-    f_cap_right = bm.faces.new([
-        stand_base_verts[0], stand_top_verts[0], leaf_outer_verts[0]
-    ])
-    f_cap_left = bm.faces.new([
-        stand_base_verts[-1], leaf_outer_verts[-1], stand_top_verts[-1]
-    ])
-    f_cap_right.material_index = 0
-    f_cap_left.material_index = 0
-
-    # 6. SET-IN SLEEVES (Natural 28-degree downward pitch with 2.5 cm ribbed cuffs)
-    N_SLEEVE_RINGS = 6
-    N_SLEEVE_COLS = 16
-    cuff_band_len = 0.025  # 2.5 cm ribbed cuff
-
-    for side in (-1, 1):  # -1 = Left, +1 = Right
-        shoulder_tip = Vector((side * shoulder_half_w, 0.0, z_shoulder_tip))
-        armpit = Vector((side * (a_chest * 0.94), 0.0, z_underarm))
-        scye_center = (shoulder_tip + armpit) * 0.5
-
-        # Downward pitch: 28 degrees
-        sleeve_pitch_rad = math.radians(28.0)
-        pitch_dx = side * math.cos(sleeve_pitch_rad)
-        pitch_dz = -math.sin(sleeve_pitch_rad)
-        sleeve_dir = Vector((pitch_dx, 0.0, pitch_dz)).normalized()
-
-        # Orthogonal axes for sleeve cross section
-        sleeve_normal_y = Vector((0.0, 1.0, 0.0))
-        sleeve_normal_perp = sleeve_dir.cross(sleeve_normal_y).normalized()
-
-        r_scye = (shoulder_tip - armpit).length * 0.48
-        r_cuff = r_scye * 0.82  # slight taper toward cuff
-
-        sleeve_rings = []
-        for sr in range(N_SLEEVE_RINGS + 1):
-            s_t = sr / float(N_SLEEVE_RINGS)
-            s_dist = s_t * sleeve_m
-            center_pt = scye_center + sleeve_dir * s_dist
-
-            cur_r = r_scye * (1.0 - s_t) + r_cuff * s_t
-
-            # Cuff band flare/ribbing at final ring
-            if s_t > 0.85:
-                cur_r *= 1.02  # ribbed hem relief
-
-            s_ring = []
-            for sc in range(N_SLEEVE_COLS):
-                sc_th = 2.0 * math.pi * sc / float(N_SLEEVE_COLS)
-                c_cos = math.cos(sc_th)
-                c_sin = math.sin(sc_th)
-
-                pt = center_pt + (sleeve_normal_perp * (cur_r * c_sin)) + (sleeve_normal_y * (cur_r * 0.88 * c_cos))
-                # Natural gravity dip at bottom of sleeve
-                if c_sin < 0:
-                    pt.z -= 0.004 * abs(c_sin)
-
-                sv = bm.verts.new(pt)
-                s_ring.append(sv)
-
-            sleeve_rings.append(s_ring)
-
-        # Bridge sleeve rings
-        for sr in range(N_SLEEVE_RINGS):
-            r_c = sleeve_rings[sr]
-            r_n = sleeve_rings[sr + 1]
-            for sc in range(N_SLEEVE_COLS):
-                next_sc = (sc + 1) % N_SLEEVE_COLS
-                if side == 1:
-                    sf = bm.faces.new([r_c[sc], r_c[next_sc], r_n[next_sc], r_n[sc]])
-                else:
-                    sf = bm.faces.new([r_c[next_sc], r_c[sc], r_n[sc], r_n[next_sc]])
-                sf.material_index = 0
-
-    return {
-        "status": "geometry_constructed",
-        "chest_m": chest_m,
-        "shoulder_m": shoulder_m,
-        "length_m": length_m,
-        "sleeve_m": sleeve_m
-    }
-
-
-def build_polo_garment(config: dict, output_glb_path: str) -> dict:
-    """
-    Main entry point for standalone photorealistic Polo T-shirt generation in Blender bpy.
+    Builds the master reference Polo T-Shirt mesh in Blender.
     """
     if bpy is None:
-        raise RuntimeError("Blender bpy module is required to execute build_polo_garment.")
+        raise RuntimeError("Blender bpy module is required to execute build_polo_mesh.")
+
+    config = config or {}
+    measurements = config.get("measurements", {})
+
+    chest_circ = float(measurements.get("chest", 1.06))
+    shoulder_w = float(measurements.get("shoulder", 0.49))
+    body_len = float(measurements.get("length", 0.71))
+    sleeve_len = float(measurements.get("sleeve", 0.21))
+    aspect = float(config.get("aspect", 1.48))
+
+    shoulder_half_w = shoulder_w / 2.0
+    neck_half_w = 0.092
+    z_hps = body_len
+
+    slope_drop = 0.046
+    z_shoulder_tip = z_hps - slope_drop
+
+    armhole_depth = 0.215
+    z_underarm = z_hps - armhole_depth
+    z_waist = z_hps * 0.40
+    z_hem = 0.0
+
+    neck_front_drop = 0.078
+    neck_back_drop = 0.024
+    z_neck_front = z_hps - neck_front_drop
+
+    a_chest, b_chest = solve_ellipse_radii(chest_circ, aspect)
+    a_waist = a_chest * 0.965
+    b_waist = b_chest * 0.965
+    a_hem = a_chest * 0.985
+    b_hem = b_chest * 0.985
 
     bpy.ops.wm.read_factory_settings(use_empty=True)
+    scene = bpy.context.scene
 
-    measurements = config.get("measurements", {})
-    fit = config.get("fit", "regular")
-
-    mesh = bpy.data.meshes.new("PoloTShirtMesh")
-    bm = bmesh.new()
-    uv_layer = bm.loops.layers.uv.new("UVMap")
-
-    # Construct the polo geometry
-    geom_info = build_polo_mesh(bm, uv_layer, measurements, config)
-
-    # Convert bmesh to Blender mesh object
-    bm.to_mesh(mesh)
-    bm.free()
-
-    obj = bpy.data.objects.new("PoloTShirt", mesh)
-    bpy.context.collection.objects.link(obj)
+    mesh_data = bpy.data.meshes.new("PoloMesh")
+    obj = bpy.data.objects.new("PoloTShirt", mesh_data)
+    scene.collection.objects.link(obj)
     bpy.context.view_layer.objects.active = obj
     obj.select_set(True)
 
-    # 1. Smooth shading
-    if hasattr(mesh, "use_auto_smooth"):
-        bpy.ops.object.shade_smooth()
-        mesh.use_auto_smooth = True
-        mesh.auto_smooth_angle = math.radians(35.0)
-    elif hasattr(bpy.ops.object, "shade_auto_smooth"):
-        try:
-            bpy.ops.object.shade_auto_smooth(angle=math.radians(35.0))
-        except Exception:
-            bpy.ops.object.shade_smooth()
-    else:
-        bpy.ops.object.shade_smooth()
+    bm = bmesh.new()
+    uv_layer = bm.loops.layers.uv.new("UVMap")
 
-    # 2. Solidify Modifier: 1.4 mm realistic cotton piqué fabric thickness
-    solid_mod = obj.modifiers.new(name="ClothThickness", type='SOLIDIFY')
-    solid_mod.thickness = 0.0014
-    solid_mod.offset = -1.0
-    solid_mod.use_rim = True
+    N_COLS = 32
+    N_RINGS_LOWER = 14
+    N_RINGS_CHEST = 6
+    N_RINGS_SHOULDER = 5
 
-    # 3. Subdivision Surface (Level 1) for organic Pacdora curvature
-    subsurf_mod = obj.modifiers.new(name="ClothSmoothness", type='SUBSURF')
-    subsurf_mod.levels = 1
-    subsurf_mod.render_levels = 1
+    vg_torso = set()
+    vg_front = set()
+    vg_back = set()
+    vg_hem = set()
+    vg_left_sh = set()
+    vg_right_sh = set()
+    vg_left_sl = set()
+    vg_right_sl = set()
+    vg_neckline = set()
+    vg_polo_collar = set()
+    vg_polo_placket = set()
 
-    # Apply modifiers
-    bpy.ops.object.modifier_apply(modifier="ClothThickness")
-    bpy.ops.object.modifier_apply(modifier="ClothSmoothness")
+    # 1. LOWER TORSO
+    torso_rings = []
+    for r_idx in range(N_RINGS_LOWER + 1):
+        t = r_idx / float(N_RINGS_LOWER)
+        z_curr = z_hem + t * z_underarm
 
-    # 4. Materials Setup
-    # Material 0: Cotton Piqué Fabric
-    mat_fabric = bpy.data.materials.new(name="CottonPiqueMat")
-    mat_fabric.use_nodes = True
-    nodes_f = mat_fabric.node_tree.nodes
-    bsdf_f = nodes_f.get("Principled BSDF")
+        if t < 0.45:
+            u = t / 0.45
+            u_ease = 0.5 * (1.0 - math.cos(math.pi * u))
+            cur_a = a_hem * (1.0 - u_ease) + a_waist * u_ease
+            cur_b = b_hem * (1.0 - u_ease) + b_waist * u_ease
+        else:
+            u = (t - 0.45) / 0.55
+            u_ease = 0.5 * (1.0 - math.cos(math.pi * u))
+            cur_a = a_waist * (1.0 - u_ease) + a_chest * u_ease
+            cur_b = b_waist * (1.0 - u_ease) + b_chest * u_ease
 
-    base_hex = config.get("base_color_hex", "#1B2A4A")  # Classic Navy default
-    clean_hex = base_hex.lstrip("#")
-    if len(clean_hex) == 6:
-        r = int(clean_hex[0:2], 16) / 255.0
-        g = int(clean_hex[2:4], 16) / 255.0
-        b = int(clean_hex[4:6], 16) / 255.0
-        bsdf_f.inputs['Base Color'].default_value = (r ** 2.2, g ** 2.2, b ** 2.2, 1.0)
+        ring = []
+        for i in range(N_COLS):
+            th = 2.0 * math.pi * i / float(N_COLS)
+            sin_th = math.sin(th)
+            cos_th = math.cos(th)
+            x = cur_a * cos_th
 
-    bsdf_f.inputs['Roughness'].default_value = 0.88  # Matte piqué cotton
-    if 'Sheen Weight' in bsdf_f.inputs:
-        bsdf_f.inputs['Sheen Weight'].default_value = 0.35
-    elif 'Sheen' in bsdf_f.inputs:
-        bsdf_f.inputs['Sheen'].default_value = 0.35
+            if sin_th >= 0:
+                y = cur_b * sin_th * (1.0 + 0.08 * sin_th * t)
+            else:
+                y = cur_b * sin_th * (1.0 - 0.03 * abs(sin_th))
 
-    obj.data.materials.append(mat_fabric)
+            v = bm.verts.new((x, y, z_curr))
+            ring.append(v)
+            vg_torso.add(v)
+            if r_idx == 0:
+                vg_hem.add(v)
+            if i < 16:
+                vg_front.add(v)
+            else:
+                vg_back.add(v)
+        torso_rings.append(ring)
 
-    # Material 1: Pearl Button Material
-    mat_btn = bpy.data.materials.new(name="PearlButtonMat")
-    mat_btn.use_nodes = True
-    bsdf_b = mat_btn.node_tree.nodes.get("Principled BSDF")
-    btn_color_hex = config.get("button_color_hex", "#F4F4F0")
-    b_clean = btn_color_hex.lstrip("#")
-    if len(b_clean) == 6:
-        br = int(b_clean[0:2], 16) / 255.0
-        bg = int(b_clean[2:4], 16) / 255.0
-        bb = int(b_clean[4:6], 16) / 255.0
-        bsdf_b.inputs['Base Color'].default_value = (br ** 2.2, bg ** 2.2, bb ** 2.2, 1.0)
+    for r_idx in range(N_RINGS_LOWER):
+        r1 = torso_rings[r_idx]
+        r2 = torso_rings[r_idx + 1]
+        for i in range(N_COLS):
+            i_next = (i + 1) % N_COLS
+            f = bm.faces.new([r1[i], r1[i_next], r2[i_next], r2[i]])
+            for loop in f.loops:
+                vx, vy, vz = loop.vert.co.x, loop.vert.co.y, loop.vert.co.z
+                u_coord = 0.25 - (vx / (2.2 * a_chest)) * 0.35 if vy >= 0 else 0.75 + (vx / (2.2 * a_chest)) * 0.35
+                v_coord = max(0.01, min(0.99, 0.08 + (vz / z_hps) * 0.82))
+                loop[uv_layer].uv = Vector((u_coord, v_coord))
 
-    bsdf_b.inputs['Roughness'].default_value = 0.22  # Polished pearl sheen
-    if 'Metallic' in bsdf_b.inputs:
-        bsdf_b.inputs['Metallic'].default_value = 0.08
+    # 2. MID TORSO
+    for r_idx in range(1, N_RINGS_CHEST + 1):
+        t = r_idx / float(N_RINGS_CHEST)
+        z_curr = z_underarm + t * (z_shoulder_tip - z_underarm) * 0.58
+        cur_a = a_chest * (1.0 - 0.015 * (t ** 1.1))
+        cur_b = b_chest * (1.0 + 0.04 * math.sin(math.pi * t))
 
-    obj.data.materials.append(mat_btn)
+        ring = [None] * N_COLS
+        for i in range(2, 15):
+            th = 2.0 * math.pi * i / float(N_COLS)
+            sin_th = math.sin(th)
+            cos_th = math.cos(th)
+            x = cur_a * cos_th
+            y = cur_b * sin_th * (1.0 + 0.08 * sin_th)
+            v = bm.verts.new((x, y, z_curr))
+            ring[i] = v
+            vg_torso.add(v)
+            vg_front.add(v)
 
-    # 5. Export binary GLB
-    os.makedirs(os.path.dirname(os.path.abspath(output_glb_path)), exist_ok=True)
-    bpy.ops.export_scene.gltf(
-        filepath=output_glb_path,
-        export_format='GLB',
-        use_selection=True,
-        export_materials='EXPORT',
-        export_normals=True,
-        export_yup=True
-    )
+        for i in range(18, 31):
+            th = 2.0 * math.pi * i / float(N_COLS)
+            sin_th = math.sin(th)
+            cos_th = math.cos(th)
+            x = cur_a * cos_th
+            y = cur_b * sin_th * (1.0 - 0.03 * abs(sin_th))
+            v = bm.verts.new((x, y, z_curr))
+            ring[i] = v
+            vg_torso.add(v)
+            vg_back.add(v)
 
-    dims = obj.dimensions
-    return {
-        "status": "success",
-        "garment_type": "polo",
-        "vertex_count": len(obj.data.vertices),
-        "face_count": len(obj.data.polygons),
-        "dimensions": {
-            "width_m": round(dims.x, 4),
-            "height_m": round(dims.z, 4),
-            "depth_m": round(dims.y, 4)
-        }
-    }
+        torso_rings.append(ring)
+
+    mid_start_r = N_RINGS_LOWER
+    for r_idx in range(mid_start_r, mid_start_r + N_RINGS_CHEST):
+        r1 = torso_rings[r_idx]
+        r2 = torso_rings[r_idx + 1]
+        for i in range(2, 14):
+            f = bm.faces.new([r1[i], r1[i + 1], r2[i + 1], r2[i]])
+            for loop in f.loops:
+                vx, vy, vz = loop.vert.co.x, loop.vert.co.y, loop.vert.co.z
+                loop[uv_layer].uv = Vector((0.25 - (vx / (2.2 * a_chest)) * 0.35, max(0.01, min(0.99, 0.08 + (vz / z_hps) * 0.82))))
+        for i in range(18, 30):
+            f = bm.faces.new([r1[i], r1[i + 1], r2[i + 1], r2[i]])
+            for loop in f.loops:
+                vx, vy, vz = loop.vert.co.x, loop.vert.co.y, loop.vert.co.z
+                loop[uv_layer].uv = Vector((0.75 + (vx / (2.2 * a_chest)) * 0.35, max(0.01, min(0.99, 0.08 + (vz / z_hps) * 0.82))))
+
+    # 3. UPPER CHEST, SHOULDERS & POLO NECKLINE
+    top_target_coords = [None] * N_COLS
+    y_neck_mid = 0.008
+
+    for i in range(2, 15):
+        if i <= 5: # Right shoulder front
+            u_sh = (5 - i) / 3.0
+            x = neck_half_w + (shoulder_half_w - neck_half_w) * u_sh
+            z = z_hps - slope_drop * (u_sh ** 1.15)
+            y = y_neck_mid + 0.046 + 0.022 * u_sh
+        elif i >= 11: # Left shoulder front
+            u_sh = (i - 11) / 3.0
+            x = -(neck_half_w + (shoulder_half_w - neck_half_w) * u_sh)
+            z = z_hps - slope_drop * (u_sh ** 1.15)
+            y = y_neck_mid + 0.046 + 0.022 * u_sh
+        else: # Front neck scoop - smooth tangent ease
+            k = i - 5
+            u_neck = k / 6.0
+            phi = u_neck * math.pi
+            x = neck_half_w * math.cos(phi)
+            smooth_drop = 0.5 * (1.0 - math.cos(phi))
+            z = z_hps - neck_front_drop * smooth_drop
+            y = y_neck_mid + 0.046 * (1.0 - smooth_drop) + 0.074 * math.sin(phi)
+        top_target_coords[i] = (x, y, z)
+
+    for i in range(18, 31):
+        if i <= 21: # Left shoulder back
+            u_sh = (21 - i) / 3.0
+            x = -(neck_half_w + (shoulder_half_w - neck_half_w) * u_sh)
+            z = z_hps - slope_drop * (u_sh ** 1.15)
+            y = y_neck_mid - (0.044 + 0.020 * u_sh)
+        elif i >= 27: # Right shoulder back
+            u_sh = (i - 27) / 3.0
+            x = neck_half_w + (shoulder_half_w - neck_half_w) * u_sh
+            z = z_hps - slope_drop * (u_sh ** 1.15)
+            y = y_neck_mid - (0.044 + 0.020 * u_sh)
+        else: # Back neck scoop
+            k = i - 21
+            u_neck = k / 6.0
+            phi = u_neck * math.pi
+            x = -neck_half_w * math.cos(phi)
+            smooth_drop = 0.5 * (1.0 - math.cos(phi))
+            z = z_hps - neck_back_drop * smooth_drop
+            y = y_neck_mid - (0.044 * (1.0 - smooth_drop) + 0.050 * math.sin(phi))
+        top_target_coords[i] = (x, y, z)
+
+    mid_top_ring = torso_rings[-1]
+    for r_sh in range(1, N_RINGS_SHOULDER + 1):
+        t_sh = r_sh / float(N_RINGS_SHOULDER)
+        t_ease = 0.5 * (1.0 - math.cos(math.pi * t_sh))
+        ring = [None] * N_COLS
+        for i in range(N_COLS):
+            if top_target_coords[i] is not None:
+                v_mid = mid_top_ring[i]
+                tx, ty, tz = top_target_coords[i]
+                x_interp = v_mid.co.x * (1.0 - t_ease) + tx * t_ease
+                y_interp = v_mid.co.y * (1.0 - t_ease) + ty * t_ease
+                z_interp = v_mid.co.z * (1.0 - t_ease) + tz * t_ease
+                v = bm.verts.new((x_interp, y_interp, z_interp))
+                ring[i] = v
+                vg_torso.add(v)
+                if i < 16:
+                    vg_front.add(v)
+                else:
+                    vg_back.add(v)
+                if i in [2, 3, 4, 5, 27, 28, 29, 30]:
+                    vg_right_sh.add(v)
+                elif i in [11, 12, 13, 14, 18, 19, 20, 21]:
+                    vg_left_sh.add(v)
+        torso_rings.append(ring)
+
+    sh_start_r = mid_start_r + N_RINGS_CHEST
+    for r_idx in range(sh_start_r, sh_start_r + N_RINGS_SHOULDER):
+        r1 = torso_rings[r_idx]
+        r2 = torso_rings[r_idx + 1]
+        for i in range(2, 14):
+            f = bm.faces.new([r1[i], r1[i + 1], r2[i + 1], r2[i]])
+            for loop in f.loops:
+                vx, vy, vz = loop.vert.co.x, loop.vert.co.y, loop.vert.co.z
+                loop[uv_layer].uv = Vector((0.25 - (vx / (2.2 * a_chest)) * 0.35, max(0.01, min(0.99, 0.08 + (vz / z_hps) * 0.82))))
+        for i in range(18, 30):
+            f = bm.faces.new([r1[i], r1[i + 1], r2[i + 1], r2[i]])
+            for loop in f.loops:
+                vx, vy, vz = loop.vert.co.x, loop.vert.co.y, loop.vert.co.z
+                loop[uv_layer].uv = Vector((0.75 + (vx / (2.2 * a_chest)) * 0.35, max(0.01, min(0.99, 0.08 + (vz / z_hps) * 0.82))))
+
+    # 4. SHOULDER SEAMS
+    top_r = torso_rings[-1]
+    for k in range(3):
+        f1 = top_r[2 + k]
+        f2 = top_r[3 + k]
+        b1 = top_r[30 - k]
+        b2 = top_r[29 - k]
+        face = bm.faces.new([f1, f2, b2, b1])
+        vg_right_sh.update([f1, f2, b2, b1])
+        for loop in face.loops:
+            vx, vy, vz = loop.vert.co.x, loop.vert.co.y, loop.vert.co.z
+            loop[uv_layer].uv = Vector((0.25 - (vx / (2.2 * a_chest)) * 0.35 if vy >= 0 else 0.75 + (vx / (2.2 * a_chest)) * 0.35, max(0.01, min(0.99, 0.08 + (vz / z_hps) * 0.82))))
+
+    for k in range(3):
+        f1 = top_r[11 + k]
+        f2 = top_r[12 + k]
+        b1 = top_r[21 - k]
+        b2 = top_r[20 - k]
+        face = bm.faces.new([f1, f2, b2, b1])
+        vg_left_sh.update([f1, f2, b2, b1])
+        for loop in face.loops:
+            vx, vy, vz = loop.vert.co.x, loop.vert.co.y, loop.vert.co.z
+            loop[uv_layer].uv = Vector((0.25 - (vx / (2.2 * a_chest)) * 0.35 if vy >= 0 else 0.75 + (vx / (2.2 * a_chest)) * 0.35, max(0.01, min(0.99, 0.08 + (vz / z_hps) * 0.82))))
+
+    # 5. INTEGRATED POLO BUTTON PLACKET
+    placket_w = 0.036
+    placket_len = 0.145
+    placket_top_z = z_neck_front
+    placket_bot_z = z_neck_front - placket_len
+    y_placket = b_chest * 0.99 + 0.0024
+
+    p_tl = bm.verts.new((-placket_w / 2.0, y_placket, placket_top_z))
+    p_tr = bm.verts.new((placket_w / 2.0, y_placket, placket_top_z))
+    p_br = bm.verts.new((placket_w / 2.0, y_placket, placket_bot_z))
+    p_bl = bm.verts.new((-placket_w / 2.0, y_placket, placket_bot_z))
+
+    f_placket = bm.faces.new([p_tl, p_tr, p_br, p_bl])
+    vg_polo_placket.update([p_tl, p_tr, p_br, p_bl])
+    for loop in f_placket.loops:
+        loop[uv_layer].uv = Vector((0.25, 0.82))
+
+    y_base = b_chest * 0.99
+    p_base_tl = bm.verts.new((-placket_w / 2.0, y_base, placket_top_z))
+    p_base_tr = bm.verts.new((placket_w / 2.0, y_base, placket_top_z))
+    p_base_br = bm.verts.new((placket_w / 2.0, y_base, placket_bot_z))
+    p_base_bl = bm.verts.new((-placket_w / 2.0, y_base, placket_bot_z))
+
+    f_pl_l = bm.faces.new([p_base_tl, p_tl, p_bl, p_base_bl])
+    f_pl_r = bm.faces.new([p_tr, p_base_tr, p_base_br, p_br])
+    f_pl_b = bm.faces.new([p_bl, p_br, p_base_br, p_base_bl])
+    vg_polo_placket.update([p_base_tl, p_base_tr, p_base_br, p_base_bl])
+    for f in [f_pl_l, f_pl_r, f_pl_b]:
+        for loop in f.loops:
+            loop[uv_layer].uv = Vector((0.25, 0.82))
+
+    # 3D Pearl Buttons
+    btn_r = 0.0055
+    btn_t = 0.0018
+    N_btn_sides = 12
+    btn_z_positions = [placket_top_z - 0.042, placket_top_z - 0.098]
+    for bz in btn_z_positions:
+        by = y_placket + 0.0004
+        btn_front = []
+        btn_back = []
+        for k in range(N_btn_sides):
+            th = 2.0 * math.pi * k / float(N_btn_sides)
+            xk = btn_r * math.sin(th)
+            zk = bz + btn_r * math.cos(th)
+            btn_front.append(bm.verts.new((xk, by + btn_t, zk)))
+            btn_back.append(bm.verts.new((xk, by, zk)))
+        v_center = bm.verts.new((0.0, by + btn_t * 0.35, bz))
+        v_back_center = bm.verts.new((0.0, by, bz))
+        for k in range(N_btn_sides):
+            k_next = (k + 1) % N_btn_sides
+            bm.faces.new([btn_back[k], btn_back[k_next], btn_front[k_next], btn_front[k]])
+            bm.faces.new([v_center, btn_front[k], btn_front[k_next]])
+            bm.faces.new([btn_back[k_next], btn_back[k], v_back_center])
+        vg_polo_placket.update(btn_front + btn_back + [v_center, v_back_center])
+
+    # 6. OPEN SPREAD POLO COLLAR (Tailored Rolled Collar with Open V-Throat)
+    stand_base_path = [
+        p_tr,
+        top_r[6], top_r[5],
+        top_r[27], top_r[26], top_r[25], top_r[24], top_r[23], top_r[22], top_r[21],
+        top_r[11], top_r[10],
+        p_tl
+    ]
+    N_stand = len(stand_base_path)
+
+    stand_top = []
+    stand_h_back = 0.020
+    stand_h_front = 0.012
+    for idx, vb in enumerate(stand_base_path):
+        u_arc = abs(idx - (N_stand - 1) / 2.0) / ((N_stand - 1) / 2.0)
+        cur_h = stand_h_back * (1.0 - u_arc) + stand_h_front * u_arc
+        vs = bm.verts.new((vb.co.x * 0.98, vb.co.y * 0.98, vb.co.z + cur_h))
+        stand_top.append(vs)
+        vg_polo_collar.add(vs)
+
+    for i in range(N_stand - 1):
+        f_st = bm.faces.new([stand_base_path[i], stand_base_path[i + 1], stand_top[i + 1], stand_top[i]])
+        for loop in f_st.loops:
+            loop[uv_layer].uv = Vector((0.05 + 0.90 * (i / float(N_stand)), 0.93))
+
+    leaf_outer = []
+    leaf_inner = []
+    cloth_t = 0.0018
+    for idx, vs in enumerate(stand_top):
+        u_arc = abs(idx - (N_stand - 1) / 2.0) / ((N_stand - 1) / 2.0)
+        if idx in [0, 1]:
+            lx = vs.co.x + 0.024
+            ly = vs.co.y + 0.034
+            lz = vs.co.z - 0.034
+        elif idx in [N_stand - 2, N_stand - 1]:
+            lx = vs.co.x - 0.024
+            ly = vs.co.y + 0.034
+            lz = vs.co.z - 0.034
+        else:
+            spread_out = 0.034 + 0.006 * u_arc
+            drop_down = 0.026 + 0.005 * u_arc
+            dy = vs.co.y
+            r_rel = math.hypot(vs.co.x, dy)
+            ux = vs.co.x / r_rel if r_rel > 1e-4 else 0.0
+            uy = dy / r_rel if r_rel > 1e-4 else 0.0
+            lx = vs.co.x + ux * spread_out
+            ly = vs.co.y + uy * spread_out
+            lz = vs.co.z - drop_down
+
+        vo = bm.verts.new((lx, ly, lz))
+        vi = bm.verts.new((lx, ly - 0.0014, lz + cloth_t))
+        leaf_outer.append(vo)
+        leaf_inner.append(vi)
+        vg_polo_collar.update([vo, vi])
+
+    for i in range(N_stand - 1):
+        f_top = bm.faces.new([stand_top[i], stand_top[i + 1], leaf_outer[i + 1], leaf_outer[i]])
+        f_rim = bm.faces.new([leaf_outer[i], leaf_outer[i + 1], leaf_inner[i + 1], leaf_inner[i]])
+        f_bot = bm.faces.new([leaf_inner[i], leaf_inner[i + 1], stand_base_path[i + 1], stand_base_path[i]])
+        for loop in f_top.loops:
+            loop[uv_layer].uv = Vector((0.05 + 0.90 * (i / float(N_stand)), 0.96))
+        for loop in f_rim.loops:
+            loop[uv_layer].uv = Vector((0.05 + 0.90 * (i / float(N_stand)), 0.975))
+        for loop in f_bot.loops:
+            loop[uv_layer].uv = Vector((0.05 + 0.90 * (i / float(N_stand)), 0.94))
+
+    # 7. SEAMLESS SET-IN SLEEVES (Pacdora A-pose drape: 45° down, 14° forward)
+    TOTAL_RINGS = len(torso_rings)
+
+    def attach_seamless_sleeve(is_left=True):
+        vg_target = vg_left_sl if is_left else vg_right_sl
+        side_sign = -1.0 if is_left else 1.0
+
+        ah_loop = []
+        if is_left:
+            ah_loop.append(torso_rings[N_RINGS_LOWER][15])
+            ah_loop.append(torso_rings[N_RINGS_LOWER][16])
+            ah_loop.append(torso_rings[N_RINGS_LOWER][17])
+            for r in range(N_RINGS_LOWER, TOTAL_RINGS):
+                ah_loop.append(torso_rings[r][18])
+            for r in range(TOTAL_RINGS - 1, N_RINGS_LOWER - 1, -1):
+                ah_loop.append(torso_rings[r][14])
+        else:
+            ah_loop.append(torso_rings[N_RINGS_LOWER][31])
+            ah_loop.append(torso_rings[N_RINGS_LOWER][0])
+            ah_loop.append(torso_rings[N_RINGS_LOWER][1])
+            for r in range(N_RINGS_LOWER, TOTAL_RINGS):
+                ah_loop.append(torso_rings[r][2])
+            for r in range(TOTAL_RINGS - 1, N_RINGS_LOWER - 1, -1):
+                ah_loop.append(torso_rings[r][30])
+
+        N_ah = len(ah_loop)
+        c0 = Vector((
+            sum(v.co.x for v in ah_loop) / float(N_ah),
+            sum(v.co.y for v in ah_loop) / float(N_ah),
+            sum(v.co.z for v in ah_loop) / float(N_ah)
+        ))
+
+        drape_angle = math.radians(45.0)
+        pitch_angle = math.radians(14.0)
+
+        d_vec = Vector((
+            side_sign * math.cos(drape_angle) * math.cos(pitch_angle),
+            math.sin(pitch_angle),
+            -math.sin(drape_angle) * math.cos(pitch_angle)
+        )).normalized()
+
+        u_vec = (Vector((0, 1, 0)) - Vector((0, 1, 0)).dot(d_vec) * d_vec).normalized()
+        v_vec = d_vec.cross(u_vec).normalized()
+
+        proj_angles = []
+        for v in ah_loop:
+            rel = v.co - c0
+            u_val = rel.dot(u_vec)
+            v_val = rel.dot(v_vec)
+            proj_angles.append(math.atan2(v_val, u_val))
+
+        N_SLEEVE_RINGS = 8
+        prev_ring = ah_loop
+        for k in range(1, N_SLEEVE_RINGS + 1):
+            t = k / float(N_SLEEVE_RINGS)
+            t_morph = 0.5 * (1.0 - math.cos(math.pi * t))
+            c_k = c0 + d_vec * (sleeve_len * t)
+
+            flare = 0.008 * math.sin(math.pi * t)
+            c_k.x += side_sign * flare * 0.25
+            c_k.z -= 0.003 * math.sin(math.pi * t)
+
+            rad_u = 0.092 * (1.0 - 0.12 * t)
+            rad_v = 0.096 * (1.0 - 0.14 * t)
+
+            cur_ring = []
+            for i in range(N_ah):
+                phi = proj_angles[i]
+                p_round = c_k + u_vec * (rad_u * math.cos(phi)) + v_vec * (rad_v * math.sin(phi))
+                p_linear = ah_loop[i].co + d_vec * (sleeve_len * t)
+                p_final = p_linear * (1.0 - t_morph) + p_round * t_morph
+                v_sl = bm.verts.new(p_final)
+                cur_ring.append(v_sl)
+                vg_target.add(v_sl)
+
+            for i in range(N_ah):
+                i_next = (i + 1) % N_ah
+                f = bm.faces.new([prev_ring[i], prev_ring[i_next], cur_ring[i_next], cur_ring[i]])
+                u0 = (0.05 if is_left else 0.55) + 0.40 * (i / float(N_ah))
+                u1 = (0.05 if is_left else 0.55) + 0.40 * ((i + 1) / float(N_ah))
+                v0 = 0.60 - 0.45 * ((k - 1) / float(N_SLEEVE_RINGS))
+                v1 = 0.60 - 0.45 * (k / float(N_SLEEVE_RINGS))
+                for loop, uv in zip(f.loops, [Vector((u0, v0)), Vector((u1, v0)), Vector((u1, v1)), Vector((u0, v1))]):
+                    loop[uv_layer].uv = uv
+
+            prev_ring = cur_ring
+
+        # Sleeve Cuff Hem
+        cuff_rim = []
+        for v in prev_ring:
+            rel = v.co - c_k
+            v_rim = bm.verts.new(v.co - rel.normalized() * 0.0032 - d_vec * 0.004)
+            cuff_rim.append(v_rim)
+            vg_target.add(v_rim)
+
+        for i in range(N_ah):
+            i_next = (i + 1) % N_ah
+            f_cuff = bm.faces.new([prev_ring[i], prev_ring[i_next], cuff_rim[i_next], cuff_rim[i]])
+            for loop in f_cuff.loops:
+                loop[uv_layer].uv = Vector((0.25, 0.15))
+
+    attach_seamless_sleeve(is_left=True)
+    attach_seamless_sleeve(is_left=False)
+
+    bm.to_mesh(mesh_data)
+    bm.free()
+
+    # Recalculate normals & enable silky smooth cloth shading across all polygons
+    bm_clean = bmesh.new()
+    bm_clean.from_mesh(mesh_data)
+    bmesh.ops.recalc_face_normals(bm_clean, faces=bm_clean.faces)
+    bm_clean.to_mesh(mesh_data)
+    bm_clean.free()
+
+    for poly in mesh_data.polygons:
+        poly.use_smooth = True
+
+    mesh_data.update()
+
+    # Create Vertex Groups
+    for vg_name in ["Torso", "FrontBody", "BackBody", "Hem", "LeftShoulder", "RightShoulder", "LeftSleeve", "RightSleeve", "Neckline", "PoloCollar", "PoloPlacket"]:
+        if vg_name not in obj.vertex_groups:
+            obj.vertex_groups.new(name=vg_name)
+
+    vg_torso_grp = obj.vertex_groups["Torso"]
+    vg_front_grp = obj.vertex_groups["FrontBody"]
+    vg_back_grp = obj.vertex_groups["BackBody"]
+    vg_hem_grp = obj.vertex_groups["Hem"]
+    vg_l_sh_grp = obj.vertex_groups["LeftShoulder"]
+    vg_r_sh_grp = obj.vertex_groups["RightShoulder"]
+    vg_l_sl_grp = obj.vertex_groups["LeftSleeve"]
+    vg_r_sl_grp = obj.vertex_groups["RightSleeve"]
+    vg_neck_grp = obj.vertex_groups["Neckline"]
+    vg_collar_grp = obj.vertex_groups["PoloCollar"]
+    vg_placket_grp = obj.vertex_groups["PoloPlacket"]
+
+    for v in mesh_data.vertices:
+        x, y, z = v.co.x, v.co.y, v.co.z
+        if x < -shoulder_half_w * 0.96 and z < z_shoulder_tip + 0.02:
+            vg_l_sl_grp.add([v.index], 1.0, 'REPLACE')
+        elif x > shoulder_half_w * 0.96 and z < z_shoulder_tip + 0.02:
+            vg_r_sl_grp.add([v.index], 1.0, 'REPLACE')
+        elif abs(x) <= placket_w * 0.85 and z <= placket_top_z + 0.01 and z >= placket_bot_z - 0.01 and y > b_chest * 0.92:
+            vg_placket_grp.add([v.index], 1.0, 'REPLACE')
+        elif z > z_neck_front - 0.04 and y > b_chest * 0.85 and abs(x) < neck_half_w * 1.3:
+            vg_collar_grp.add([v.index], 1.0, 'REPLACE')
+        else:
+            vg_torso_grp.add([v.index], 1.0, 'REPLACE')
+            if y >= 0:
+                vg_front_grp.add([v.index], 1.0, 'REPLACE')
+            else:
+                vg_back_grp.add([v.index], 1.0, 'REPLACE')
+
+            if z <= 0.025:
+                vg_hem_grp.add([v.index], 1.0, 'REPLACE')
+
+            if z >= z_underarm * 1.05:
+                if x < -neck_half_w * 0.90:
+                    vg_l_sh_grp.add([v.index], 1.0, 'REPLACE')
+                elif x > neck_half_w * 0.90:
+                    vg_r_sh_grp.add([v.index], 1.0, 'REPLACE')
+                else:
+                    vg_neck_grp.add([v.index], 1.0, 'REPLACE')
+
+    if output_blend:
+        os.makedirs(os.path.dirname(os.path.abspath(output_blend)), exist_ok=True)
+        bpy.ops.wm.save_as_mainfile(filepath=output_blend)
+        print(f"MASTER_POLO_BLEND_SAVED: {output_blend}")
+
+    if output_glb:
+        os.makedirs(os.path.dirname(os.path.abspath(output_glb)), exist_ok=True)
+        bpy.ops.export_scene.gltf(
+            filepath=output_glb,
+            export_format='GLB',
+            use_selection=True,
+            export_apply=True,
+            export_materials='EXPORT',
+            export_normals=True
+        )
+        print(f"MASTER_POLO_GLB_SAVED: {output_glb}")
+
+    return obj

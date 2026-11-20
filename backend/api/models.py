@@ -17,7 +17,12 @@ async def get_model_file(filename: str = Path(...)):
     file_path = os.path.join(MODELS_DIR, clean_filename)
 
     if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail=f"Model '{clean_filename}' not found.")
+        base_models_dir = os.path.join(STORAGE_DIR, "base_models")
+        base_path = os.path.join(base_models_dir, clean_filename)
+        if os.path.exists(base_path):
+            file_path = base_path
+        else:
+            raise HTTPException(status_code=404, detail=f"Model '{clean_filename}' not found.")
 
     headers = {
         "Access-Control-Allow-Origin": "*",
